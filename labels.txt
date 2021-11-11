@@ -1,0 +1,6 @@
+Comprehensive list of all label names used in JSON files for reference
+-keyhole porosity
+-gas entrapment porosity
+-lack of fusion porosity
+-Gas Porosity
+-Fusion Porosity
