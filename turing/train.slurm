@@ -7,5 +7,5 @@
 #SBATCH --gres=gpu:4             # number of gpus
 
 source ./project_env/bin/activate # full path to virtual env
-python job.py
+python train.py custom_mrcnn_coco mask_rcnn_coco.h5 # train model with coco weights loaded
 deactivate
