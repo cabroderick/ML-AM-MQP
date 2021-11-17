@@ -37,8 +37,8 @@ config = CustomConfig()
 # set up dataset
 class AMDataset(utils.Dataset):
   # define constants
-  BASE_IMAGES_DIR = './ML-AM-MQP/Data/Trial/' # directory where all images can be found
-  BASE_ANNOTATIONS_DIR = './ML-AM-MQP/Data/labeled data for model/' # directory where all images labels can be found
+  BASE_IMAGES_DIR = '/ML-AM-MQP/Data/Trial/' # directory where all images can be found
+  BASE_ANNOTATIONS_DIR = '/ML-AM-MQP/Data/Trial/' # directory where all images labels can be found
   IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
   ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
 
