@@ -111,8 +111,8 @@ class AMDataset(utils.Dataset):
       box = boxes[i]
       for key in box:
         if (box[key]): # make sure box is not empty
-          col_s, col_e = int(box[key][0][0]), int(box[key][0][1])
-          row_s, row_e = int(box[key][1][0]), int(box[key][1][1])
+          col_s, col_e = int(box[key][0][0]), int(box[key][1][0])
+          row_s, row_e = int(box[key][0][1]), int(box[key][1][1])
           print("Columns: " + str(col_s) + ", " + str(col_e))
           print("Rows: " + str(row_s) + ", " + str(row_e))
           masks[row_s:row_e, col_s:col_e, masks_index] = 1
@@ -131,15 +131,17 @@ class AMDataset(utils.Dataset):
       for rect in data['shapes']:
         if rect['shape_type'] == 'rectangle':
           box = {} # dictionary that contains a class and its corresponding list of points
-          for rect in self.CLASSES: # initialize dictionary keys
-            box[rect] = []
+          for c in self.CLASSES: # initialize dictionary keys
+            box[c] = []
           label = self.normalize_classname(rect['label']) # get the label name from the JSON and fix name if needed
+          print(rect)
+          print(label)
           box[label] = rect['points'] # set the key value of the dictionary to the points extracted
           boxes.append(box) # add to list of extracted boxes
  
       return boxes
 
-  def normalize_classname(class_name): # normalize the class name to one used by the model
+  def normalize_classname(self, class_name): # normalize the class name to one used by the model
     class_name = class_name.lower() # remove capitalization
     classes_dict = { # dictionary containing all class names used in labels and their appropriate model class name
       'gas entrapment porosity' : 'gas entrapment porosity',
@@ -159,6 +161,7 @@ dataset_train.prepare()
 dataset_val = AMDataset()
 dataset_val.load_dataset(validation=True)
 dataset_val.prepare()
+dataset_val.load_mask(12)
 
 # train model w/ coco weights
 
