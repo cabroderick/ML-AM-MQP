@@ -26,7 +26,7 @@ if not sys.argv: # ensure model name is included in arguments
 class CustomConfig(Config):
     NAME = "custom_mcrnn"
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 2
+    IMAGES_PER_GPU = 1
     NUM_CLASSES = 1 + 3 # 3 classes + background
     STEPS_PER_EPOCH = 100
     LEARNING_RATE = .001
@@ -163,19 +163,19 @@ dataset_val.load_dataset(validation=True)
 dataset_val.prepare()
 dataset_val.load_mask(12)
 
-# train model w/ coco weights
+# train model
 
-#model_coco = MaskRCNN(mode='training', model_dir='./'+sys.argv[0]+'/', config=CustomConfig())
+model_coco = MaskRCNN(mode='training', model_dir='./'+sys.argv[0]+'/', config=CustomConfig())
 
-#if len(sys.argv) > 1: # optionally load pre-trained weights
-#  model_coco.load_weights(sys.argv[1], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
+if len(sys.argv) > 1: # optionally load pre-trained weights
+  model_coco.load_weights(sys.argv[1], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
 
 # train model
-#model_coco.train(train_dataset=dataset_train,
-#            val_dataset=dataset_val,
-#            learning_rate=.001,
-#            epochs=10,
-#            layers='heads')
+model_coco.train(train_dataset=dataset_train,
+           val_dataset=dataset_val,
+           learning_rate=.001,
+           epochs=5,
+           layers='heads')
 
 # save training results to external file
-#model_coco.keras_model.save_weights(sys.argv[0]+'.h5')
+model_coco.keras_model.save_weights(sys.argv[0]+'.h5')
