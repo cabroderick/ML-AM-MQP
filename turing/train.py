@@ -166,8 +166,6 @@ dataset_val.prepare()
 
 model_coco = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomConfig())
 
-print('Estimated memory cost: ' + get_model_memory_usage(150, model_coco.ker)) # estimate memory cost and display
-
 if len(sys.argv) > 2: # optionally load pre-trained weights
   model_coco.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
 
