@@ -24,11 +24,10 @@ if not sys.argv: # ensure model name is included in arguments
 
 # configure network
 class CustomConfig(Config):
-    NAME = "object"
+    NAME = "custom_mcrnn"
     GPU_COUNT = 4
     IMAGES_PER_GPU = 2
-    # number of classes (including background)
-    NUM_CLASSES = 1 + 2
+    NUM_CLASSES = 1 + 3 # 3 classes + background
     STEPS_PER_EPOCH = 100
     LEARNING_RATE = .001
 
@@ -43,7 +42,7 @@ class AMDataset(utils.Dataset):
   ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
 
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
-  CLASSES = ['gas porosity', 'lack of fusion porosity'] # all annotation classes
+  CLASSES = ['gas entrapment porosity', 'lack of fusion porosity', 'keyhole porosity'] # all annotation classes
 
   IMG_WIDTH = 1280
   IMG_HEIGHT = 1024
@@ -128,6 +127,17 @@ class AMDataset(utils.Dataset):
           boxes.append(box) # add to list of extracted boxes
  
       return boxes
+
+  def normalize_classname(class_name): # normalize the class name to one used by the model
+    class_name = class_name.lower() # remove capitalization
+    classes_dict = { # dictionary containing all class names used in labels and their appropriate model class name
+      'gas entrapment porosity' : 'gas entrapment porosity',
+      'keyhole porosity' : 'keyhole porosity',
+      'lack of fusion porosity' : 'lack of fusion porosity',
+      'fusion porosity' : 'lack of fusion porosity',
+      'gas porosity' : 'gas entrapment porosity'
+    }
+    return classes_dict.get(class_name)
 
 # set up train and validation data
 
