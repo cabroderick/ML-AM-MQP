@@ -53,19 +53,19 @@ class AMDataset(utils.Dataset):
     annotation_paths = [] # list of all paths to annotations to be processed
 
     for subdir in self.IMAGES_DIRS:
-      [image_paths.append(dir) for dir in os.listdir(self.BASE_IMAGES_DIR+subdir)] # create the list of all image paths
+      [image_paths.append(self.BASE_IMAGES_DIR + subdir + dir) for dir in sorted(os.listdir(self.BASE_IMAGES_DIR+subdir))] # create the list of all image paths
     for subdir in self.ANNOTATIONS_DIRS:
-      [annotation_paths.append(dir) for dir in os.listdir(self.BASE_ANNOTATIONS_DIR+subdir)] # create the list of all annotation paths
-
-    print(*annotation_paths)
-    print(*image_paths)
-    exit(0)
+      [annotation_paths.append(self.BASE_ANNOTATIONS_DIR + subdir + dir) for dir in sorted(os.listdir(self.BASE_ANNOTATIONS_DIR+subdir))] # create the list of all annotation paths
     
     if (len(image_paths) != len(annotation_paths)): # raise exception if mismatch betwaeen number of images and annotations
       raise(ValueError('Number of images and annotations must be equal'))
 
     total_images = len(image_paths) # count of all images to be processed
     val_images = (int) (total_images * (1-self.TRAIN_TEST_SPLIT)) # the total number of images in the validation set
+
+    print('Total images: ' + str(total_images))
+    print('Validation images: ' + str(val_images))
+    print('Training images: ' + str(total_images - val_images))
 
     # configure dataset
     for i in range(len(self.CLASSES)):
@@ -86,6 +86,7 @@ class AMDataset(utils.Dataset):
       print("Image path: " + image_path)
       print("Annotation path: " + annotation_path)
       image_id = image_path.split('/')[-1][:-4] # split the string by the '/' delimiter, get last element (filename), and remove file extension
+      print("Image id: " + image_id)
 
       self.add_image('dataset',
                      image_id=image_id, 
