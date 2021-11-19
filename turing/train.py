@@ -19,7 +19,7 @@ import numpy as np
 import urllib.request
 import sys
 
-if not sys.argv: # ensure model name is included in arguments
+if len(sys.argv) < 2: # ensure model name is included in arguments
   sys.exit('Insufficient arguments')
 
 # configure network
@@ -165,10 +165,10 @@ dataset_val.load_mask(12)
 
 # train model
 
-model_coco = MaskRCNN(mode='training', model_dir='./'+sys.argv[0]+'/', config=CustomConfig())
+model_coco = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomConfig())
 
-if len(sys.argv) > 1: # optionally load pre-trained weights
-  model_coco.load_weights(sys.argv[1], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
+if len(sys.argv) > 2: # optionally load pre-trained weights
+  model_coco.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
 
 # train model
 model_coco.train(train_dataset=dataset_train,
@@ -178,4 +178,4 @@ model_coco.train(train_dataset=dataset_train,
            layers='heads')
 
 # save training results to external file
-model_coco.keras_model.save_weights(sys.argv[0]+'.h5')
+model_coco.keras_model.save_weights(sys.argv[1]+'.h5')
