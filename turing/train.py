@@ -113,6 +113,8 @@ class AMDataset(utils.Dataset):
         if (box[key]): # make sure box is not empty
           col_s, col_e = int(box[key][0][0]), int(box[key][0][1])
           row_s, row_e = int(box[key][1][0]), int(box[key][1][1])
+          print("Columns: " + str(col_s) + ", " + str(col_e))
+          print("Rows: " + str(row_s) + ", " + str(row_e))
           masks[row_s:row_e, col_s:col_e, masks_index] = 1
           masks_index += 1
           class_ids.append(self.class_names.index(key))
@@ -131,7 +133,7 @@ class AMDataset(utils.Dataset):
           box = {} # dictionary that contains a class and its corresponding list of points
           for rect in self.CLASSES: # initialize dictionary keys
             box[rect] = []
-          label = rect['label'] # get the label name from the JSON TODO: fix label names
+          label = self.normalize_classname(rect['label']) # get the label name from the JSON and fix name if needed
           box[label] = rect['points'] # set the key value of the dictionary to the points extracted
           boxes.append(box) # add to list of extracted boxes
  
