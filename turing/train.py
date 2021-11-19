@@ -52,8 +52,14 @@ class AMDataset(utils.Dataset):
     image_paths = [] # list of all paths to images to be processed
     annotation_paths = [] # list of all paths to annotations to be processed
 
-    [image_paths.append(os.listdir(self.BASE_IMAGES_DIR+dir)) for dir in self.IMAGES_DIRS] # create the list of all image paths
-    [annotation_paths.append(os.listdir(self.BASE_ANNOTATIONS_DIR+dir)) for dir in self.ANNOTATIONS_DIRS] # create the list of all annotation paths
+    for subdir in self.IMAGES_DIRS:
+      [image_paths.append(dir) for dir in os.listdir(self.BASE_IMAGES_DIR+subdir)] # create the list of all image paths
+    for subdir in self.ANNOTATIONS_DIRS:
+      [annotation_paths.append(dir) for dir in os.listdir(self.BASE_ANNOTATIONS_DIR+subdir)] # create the list of all annotation paths
+
+    print(*annotation_paths)
+    print(*image_paths)
+    exit(0)
     
     if (len(image_paths) != len(annotation_paths)): # raise exception if mismatch betwaeen number of images and annotations
       raise(ValueError('Number of images and annotations must be equal'))
