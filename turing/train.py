@@ -77,6 +77,8 @@ class AMDataset(utils.Dataset):
 
       image_path = image_paths[i]
       annotation_path = annotation_paths[i]
+      print("Image path: " + image_path)
+      print("Annotation path: " + annotation_path)
       image_id = image_path.split('/')[-1][:-4] # split the string by the '/' delimiter, get last element (filename), and remove file extension
 
       self.add_image('dataset',
