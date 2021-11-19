@@ -152,43 +152,6 @@ class AMDataset(utils.Dataset):
     }
     return classes_dict.get(class_name)
 
-# attempt to estimate needed memory for model
-# obtained from https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model/46216013
-def get_model_memory_usage(batch_size, model):
-    import numpy as np
-    try:
-        from keras import backend as K
-    except:
-        from tensorflow.keras import backend as K
-
-    shapes_mem_count = 0
-    internal_model_mem_count = 0
-    for l in model.layers:
-        layer_type = l.__class__.__name__
-        if layer_type == 'Model':
-            internal_model_mem_count += get_model_memory_usage(batch_size, l)
-        single_layer_mem = 1
-        out_shape = l.output_shape
-        if type(out_shape) is list:
-            out_shape = out_shape[0]
-        for s in out_shape:
-            if s is None:
-                continue
-            single_layer_mem *= s
-        shapes_mem_count += single_layer_mem
-
-    trainable_count = np.sum([K.count_params(p) for p in model.trainable_weights])
-    non_trainable_count = np.sum([K.count_params(p) for p in model.non_trainable_weights])
-
-    number_size = 4.0
-    if K.floatx() == 'float16':
-        number_size = 2.0
-    if K.floatx() == 'float64':
-        number_size = 8.0
-
-    total_memory = number_size * (batch_size * shapes_mem_count + trainable_count + non_trainable_count)
-    gbytes = np.round(total_memory / (1024.0 ** 3), 3) + internal_model_mem_count
-
 # set up train and validation data
 
 dataset_train = AMDataset()
@@ -203,18 +166,18 @@ dataset_val.prepare()
 
 model_coco = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomConfig())
 
-print('Estimated memory cost: ' + get_model_memory_usage(150, model_coco)) # estimate memory cost and display
+print('Estimated memory cost: ' + get_model_memory_usage(150, model_coco.ker)) # estimate memory cost and display
 
 if len(sys.argv) > 2: # optionally load pre-trained weights
   model_coco.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
 
 
-# # train model
-# model_coco.train(train_dataset=dataset_train,
-#            val_dataset=dataset_val,
-#            learning_rate=.001,
-#            epochs=5,
-#            layers='heads')
+# train model
+model_coco.train(train_dataset=dataset_train,
+           val_dataset=dataset_val,
+           learning_rate=.001,
+           epochs=5,
+           layers='heads')
 
-# # save training results to external file
-# model_coco.keras_model.save_weights(sys.argv[1]+'.h5')
+# save training results to external file
+model_coco.keras_model.save_weights(sys.argv[1]+'.h5')
