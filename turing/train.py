@@ -36,8 +36,8 @@ config = CustomConfig()
 # set up dataset
 class AMDataset(utils.Dataset):
   # define constants
-  BASE_IMAGES_DIR = '/ML-AM-MQP/Data/Trial/' # directory where all images can be found
-  BASE_ANNOTATIONS_DIR = '/ML-AM-MQP/Data/Trial/' # directory where all images labels can be found
+  BASE_IMAGES_DIR = os.path.expanduser('~') + '/ML-AM-MQP/Data/Trial/' # directory where all images can be found
+  BASE_ANNOTATIONS_DIR = os.path.expanduser('~') + '/ML-AM-MQP/Data/Trial/' # directory where all images labels can be found
   IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
   ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
 
@@ -62,7 +62,7 @@ class AMDataset(utils.Dataset):
     val_images = (int) (total_images * (1-self.TRAIN_TEST_SPLIT)) # the total number of images in the validation set
 
     # configure dataset
-    for i in range(len(CLASSES)):
+    for i in range(len(self.CLASSES)):
       self.add_class('dataset', i+1, self.CLASSES[i]) # add classes to model
 
     val_images_counter = val_images # counter to keep track of remaining images for validation set
@@ -151,17 +151,17 @@ dataset_val.prepare()
 
 # train model w/ coco weights
 
-model_coco = MaskRCNN(mode='training', model_dir='./'+sys.argv[0]+'/', config=CustomConfig())
+#model_coco = MaskRCNN(mode='training', model_dir='./'+sys.argv[0]+'/', config=CustomConfig())
 
-if len(sys.argv) > 1: # optionally load pre-trained weights
-  model_coco.load_weights(sys.argv[1], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
+#if len(sys.argv) > 1: # optionally load pre-trained weights
+#  model_coco.load_weights(sys.argv[1], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
 
 # train model
-model_coco.train(train_dataset=dataset_train,
-            val_dataset=dataset_val,
-            learning_rate=.001,
-            epochs=10,
-            layers='heads')
+#model_coco.train(train_dataset=dataset_train,
+#            val_dataset=dataset_val,
+#            learning_rate=.001,
+#            epochs=10,
+#            layers='heads')
 
 # save training results to external file
-model_coco.keras_model.save_weights(sys.argv[0]+'.h5')
+#model_coco.keras_model.save_weights(sys.argv[0]+'.h5')

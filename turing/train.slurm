@@ -6,6 +6,6 @@
 #SBATCH --mem-per-cpu=32GB       # total memory per core (default is 4 GB per CPU-core)
 #SBATCH --gres=gpu:4             # number of gpus
 
-source ./project_env/bin/activate # full path to virtual env
-python train.py custom_mrcnn_coco mask_rcnn_coco.h5 # train model with coco weights loaded
+source ~/project_env/bin/activate # full path to virtual env
+python train.py custom_mrcnn_coco ~/mask_rcnn_coco.h5 # train model with coco weights loaded
 deactivate
