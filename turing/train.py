@@ -25,10 +25,19 @@ if len(sys.argv) < 2: # ensure model name is included in arguments
 # configure network
 class CustomConfig(Config):
     NAME = "custom_mcrnn"
-    GPU_COUNT = 4
-    IMAGES_PER_GPU = 1
-    NUM_CLASSES = 1 + 3 # 3 classes + background
+
+    # resize images to improve performance
+    IMAGE_MIN_DIM = 128
+    IMAGE_MAX_DIM = 128
+
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 8
+
+    # 3 classes + background
+    NUM_CLASSES = 1 + 3 
+
     STEPS_PER_EPOCH = 100
+
     LEARNING_RATE = .001
 
 config = CustomConfig()
