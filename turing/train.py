@@ -26,10 +26,6 @@ if len(sys.argv) < 2: # ensure model name is included in arguments
 class CustomConfig(Config):
     NAME = "custom_mcrnn"
 
-    # resize images to improve performance
-    IMAGE_MIN_DIM = 128
-    IMAGE_MAX_DIM = 128
-
     GPU_COUNT = 1
     IMAGES_PER_GPU = 8
 
@@ -39,6 +35,10 @@ class CustomConfig(Config):
     STEPS_PER_EPOCH = 100
 
     LEARNING_RATE = .001
+
+    # specify image size for resizing
+    IMAGE_MIN_DIM = 256
+    IMAGE_MAX_DIM = 256
 
 config = CustomConfig()
 
@@ -112,21 +112,19 @@ class AMDataset(utils.Dataset):
     height = image_info['height']
     path = image_info['annotation']
 
-    masks_index = 0 # keep track of index for use in masks
-
     boxes = self.extract_boxes(path) # extract mask data from json file
     masks = np.zeros([height, width, len(boxes)], dtype='uint8') # initialize array of masks for each bounding box
     for i in range(len(boxes)):
       box = boxes[i]
       for key in box:
-        if (box[key]): # make sure box is not empty
-          col_s, col_e = int(box[key][0][0]), int(box[key][1][0])
-          row_s, row_e = int(box[key][0][1]), int(box[key][1][1])
-          print("Columns: " + str(col_s) + ", " + str(col_e))
-          print("Rows: " + str(row_s) + ", " + str(row_e))
-          masks[row_s:row_e, col_s:col_e, masks_index] = 1
-          masks_index += 1
-          class_ids.append(self.class_names.index(key))
+        mask = np.zeroes()
+
+        col_s, col_e = int(box[key][0][0]), int(box[key][1][0])
+        row_s, row_e = int(box[key][0][1]), int(box[key][1][1])
+        # print("Columns: " + str(col_s) + ", " + str(col_e))
+        # print("Rows: " + str(row_s) + ", " + str(row_e))
+        masks[row_s:row_e, col_s:col_e, i] = 1
+        class_ids.append(self.class_names.index(key))
 
     return masks, np.array(class_ids)
 
@@ -140,15 +138,31 @@ class AMDataset(utils.Dataset):
       for rect in data['shapes']:
         if rect['shape_type'] == 'rectangle':
           box = {} # dictionary that contains a class and its corresponding list of points
-          for c in self.CLASSES: # initialize dictionary keys
-            box[c] = []
+          for key in self.CLASSES: # initialize dictionary keys
+            box[key] = []
           label = self.normalize_classname(rect['label']) # get the label name from the JSON and fix name if needed
-          print(rect)
-          print(label)
           box[label] = rect['points'] # set the key value of the dictionary to the points extracted
           boxes.append(box) # add to list of extracted boxes
- 
+
+      for box in boxes:
+        (box.pop(key, None) for key in box.keys() if box[key] == []) # check if any keys contain no points and if so remove them from the dictionary
+
+      print(boxes)
+
       return boxes
+
+  def load_image(self, image_id): # override load image to enable resizing
+     # Load image
+    image = skimage.io.imread(self.image_info[image_id]['path'])
+    # If grayscale. Convert to RGB for consistency.
+    if image.ndim != 3:
+        image = skimage.color.gray2rgb(image)
+    # If has an alpha channel, remove it for consistency
+    if image.shape[-1] == 4:
+        image = image[..., :3]
+
+    image = self.resize_image(image, min_dim=config.IMAGE_MIN_DIM, max_dim=config.IMAGE_MAX_DIM, mode='square') # resize to dims specified by config
+    return image
 
   def normalize_classname(self, class_name): # normalize the class name to one used by the model
     class_name = class_name.lower() # remove capitalization
@@ -173,18 +187,22 @@ dataset_val.prepare()
 
 # configure model
 
-model_coco = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomConfig())
+model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomConfig())
 
 if len(sys.argv) > 2: # optionally load pre-trained weights
-  model_coco.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
+  model.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
 
+# print summary
+print(model.keras_model.summary())
 
-# train model
-model_coco.train(train_dataset=dataset_train,
-           val_dataset=dataset_val,
-           learning_rate=.001,
-           epochs=5,
-           layers='heads')
+dataset_train.load_mask(1)
 
-# save training results to external file
-model_coco.keras_model.save_weights(sys.argv[1]+'.h5')
+# # train model
+# model.train(train_dataset=dataset_train,
+#            val_dataset=dataset_val,
+#            learning_rate=.001,
+#            epochs=5,
+#            layers='heads')
+
+# # save training results to external file
+# model.keras_model.save_weights(sys.argv[1]+'.h5')
