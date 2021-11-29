@@ -35,13 +35,16 @@ class CustomConfig(Config):
 
     STEPS_PER_EPOCH = 100
 
+    VALIDATION_STEPS = 5
+
     LEARNING_RATE = .001
 
     # specify image size for resizing
-    IMAGE_MIN_DIM = 256
-    IMAGE_MAX_DIM = 256
+    IMAGE_MIN_DIM = 128
+    IMAGE_MAX_DIM = 128
 
 config = CustomConfig()
+config.display()
 
 # set up dataset
 class AMDataset(utils.Dataset):
@@ -105,15 +108,15 @@ class AMDataset(utils.Dataset):
                      image_id=image_id, 
                      path=image_path, 
                      annotation=annotation_path,
-                     width=256,
-                     height=256)
+                     width=self.IMG_WIDTH,
+                     height=self.IMG_HEIGHT)
 
   def load_mask(self, image_id):
     class_ids = list() # list of class ids corresponding to each mask in the mask list
     image_info = self.image_info[image_id] # extract image info from data added earlier
 
-    width = self.IMG_WIDTH
-    height = self.IMG_HEIGHT
+    width = image_info['width']
+    height = image_info['height']
     path = image_info['annotation']
 
     boxes = self.extract_boxes(path) # extract mask data from json file
@@ -132,7 +135,7 @@ class AMDataset(utils.Dataset):
     if self.SCALE == -1 or self.PADDING == -1:
       self.load_image(1) # will set the appropriate scale and padding values
     mask = utils.resize_mask(mask, self.SCALE, self.PADDING)
-    return mask, np.array(class_ids)
+    return mask.astype(np.bool), np.array(class_ids)
 
   def extract_boxes(self, filename): # helper to extract bounding boxes from json
       f = open(filename,)
