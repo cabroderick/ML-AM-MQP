@@ -56,6 +56,9 @@ class AMDataset(utils.Dataset):
   IMG_WIDTH = 1280
   IMG_HEIGHT = 1024
 
+  SCALE = -1 # to be used for resize_mask
+  PADDING = -1 # to be used for resize_mask
+
   def load_dataset(self, validation=False):
 
     image_paths = [] # list of all paths to images to be processed
@@ -113,20 +116,21 @@ class AMDataset(utils.Dataset):
     path = image_info['annotation']
 
     boxes = self.extract_boxes(path) # extract mask data from json file
-    masks = np.zeros([height, width, len(boxes)], dtype='uint8') # initialize array of masks for each bounding box
+    mask = np.zeros([height, width, len(boxes)], dtype='uint8') # initialize array of masks for each bounding box
     for i in range(len(boxes)):
       box = boxes[i]
-      for key in box:
-        # mask = np.zeros()
-
+      for key in box: # there is only one key per box so this happens once every timee
         col_s, col_e = int(box[key][0][0]), int(box[key][1][0])
         row_s, row_e = int(box[key][0][1]), int(box[key][1][1])
         # print("Columns: " + str(col_s) + ", " + str(col_e))
         # print("Rows: " + str(row_s) + ", " + str(row_e))
-        masks[row_s:row_e, col_s:col_e, i] = 1
+        mask[row_s:row_e, col_s:col_e, i] = 1
         class_ids.append(self.class_names.index(key))
 
-    return masks, np.array(class_ids)
+    # resize mask to proper size
+    scale, padding = self.get_scale_padding()
+    mask = self.resize_mask(mask, scale, padding)
+    return mask, np.array(class_ids)
 
   def extract_boxes(self, filename): # helper to extract bounding boxes from json
       f = open(filename,)
@@ -141,8 +145,8 @@ class AMDataset(utils.Dataset):
           label = self.normalize_classname(rect['label']) # get the label name from the JSON and fix name if needed
           box[label] = rect['points'] # set the key value of the dictionary to the points extracted
           boxes.append(box) # add to list of extracted boxes
-          
-      print(boxes)
+          # TODO although functional this approach is very messy because it uses a dictionary with a single key for each individual bounding box, this can be improved
+
       return boxes
 
   def load_image(self, image_id): # override load image to enable resizing
@@ -168,6 +172,13 @@ class AMDataset(utils.Dataset):
       'gas porosity' : 'gas entrapment porosity'
     }
     return classes_dict.get(class_name)
+  
+  def get_scale_padding(self): # gets the scale and padding for the resize_mask function
+    if self.SCALE == -1 or self.PADDING == -1:
+      img, window, scale, padding = self.resize_image(skimage.io.imread(self.image_info[0]['path']))
+      self.SCALE = scale
+      self.PADDING = padding
+    return self.SCALE, self.PADDING
 
 # set up train and validation data
 
