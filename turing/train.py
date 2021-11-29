@@ -129,8 +129,8 @@ class AMDataset(utils.Dataset):
         class_ids.append(self.class_names.index(key))
 
     # resize mask to proper size
-    # scale, padding = self.get_scale_padding()
-    # mask = self.resize_mask(mask, scale, padding)
+    scale, padding = self.get_scale_padding()
+    mask = self.resize_mask(mask, scale, padding)
     return mask, np.array(class_ids)
 
   def extract_boxes(self, filename): # helper to extract bounding boxes from json
@@ -176,7 +176,7 @@ class AMDataset(utils.Dataset):
   
   def get_scale_padding(self): # gets the scale and padding for the resize_mask function
     if self.SCALE == -1 or self.PADDING == -1:
-      img, window, scale, padding = self.resize_image(skimage.io.imread(self.image_info[0]['path']))
+      img, window, scale, padding = self.resize_image(skimage.io.imread(self.image_info[1]['path']))
       self.SCALE = scale
       self.PADDING = padding
     return self.SCALE, self.PADDING
