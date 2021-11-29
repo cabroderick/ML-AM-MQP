@@ -138,15 +138,10 @@ class AMDataset(utils.Dataset):
       for rect in data['shapes']:
         if rect['shape_type'] == 'rectangle':
           box = {} # dictionary that contains a class and its corresponding list of points
-          for key in self.CLASSES: # initialize dictionary keys
-            box[key] = []
           label = self.normalize_classname(rect['label']) # get the label name from the JSON and fix name if needed
           box[label] = rect['points'] # set the key value of the dictionary to the points extracted
           boxes.append(box) # add to list of extracted boxes
-
-      for box in boxes:
-        box = dict( [(k,v) for k,v in box.items() if len(v)>0]) # check if any keys contain no points and if so remove them from the dictionary
-
+          
       print(boxes)
       return boxes
 
