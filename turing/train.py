@@ -105,15 +105,15 @@ class AMDataset(utils.Dataset):
                      image_id=image_id, 
                      path=image_path, 
                      annotation=annotation_path,
-                     width=self.IMG_WIDTH,
-                     height=self.IMG_HEIGHT)
+                     width=256,
+                     height=256)
 
   def load_mask(self, image_id):
     class_ids = list() # list of class ids corresponding to each mask in the mask list
     image_info = self.image_info[image_id] # extract image info from data added earlier
 
-    width = image_info['width']
-    height = image_info['height']
+    width = self.IMG_WIDTH
+    height = self.IMG_HEIGHT
     path = image_info['annotation']
 
     boxes = self.extract_boxes(path) # extract mask data from json file
