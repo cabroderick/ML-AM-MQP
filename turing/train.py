@@ -27,8 +27,8 @@ if len(sys.argv) < 2: # ensure model name is included in arguments
 class CustomConfig(Config):
     NAME = "custom_mcrnn"
 
-    GPU_COUNT = 1
-    IMAGES_PER_GPU = 1
+    # GPU_COUNT = 1
+    # IMAGES_PER_GPU = 1
 
     # 3 classes + background
     NUM_CLASSES = 1 + 3 
@@ -40,8 +40,10 @@ class CustomConfig(Config):
     LEARNING_RATE = .001
 
     # specify image size for resizing
-    IMAGE_MIN_DIM = 256
-    IMAGE_MAX_DIM = 256
+    IMAGE_MIN_DIM = 512
+    IMAGE_MAX_DIM = 512
+
+    BATCH_SIZE = 1
 
 config = CustomConfig()
 config.display()
@@ -51,10 +53,8 @@ class AMDataset(utils.Dataset):
   # define constants
   BASE_IMAGES_DIR = os.path.expanduser('~') + '/ML-AM-MQP/Data/Trial/' # directory where all images can be found
   BASE_ANNOTATIONS_DIR = os.path.expanduser('~') + '/ML-AM-MQP/Data/Trial/' # directory where all images labels can be found
-  # IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
-  # ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
-  IMAGES_DIRS = ['H6/'] # list of directories where images are contained
-  ANNOTATIONS_DIRS = ['Labeled H6/'] # corresponding list of directories where annotations are contained
+  IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
+  ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
 
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['gas entrapment porosity', 'lack of fusion porosity', 'keyhole porosity'] # all annotation classes
