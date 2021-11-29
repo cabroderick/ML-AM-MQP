@@ -129,8 +129,9 @@ class AMDataset(utils.Dataset):
         class_ids.append(self.class_names.index(key))
 
     # resize mask to proper size
-    scale, padding = self.get_scale_padding()
-    mask = utils.resize_mask(mask, scale, padding)
+    if self.SCALE == -1 or self.PADDING == -1:
+      self.load_image(1) # will set the appropriate scale and padding values
+    mask = utils.resize_mask(mask, self.SCALE, self.PADDING)
     return mask, np.array(class_ids)
 
   def extract_boxes(self, filename): # helper to extract bounding boxes from json
@@ -161,6 +162,8 @@ class AMDataset(utils.Dataset):
         image = image[..., :3]
 
     image, window, scale, padding, _ = utils.resize_image(image, min_dim=config.IMAGE_MIN_DIM, max_dim=config.IMAGE_MAX_DIM, mode='square') # resize to dims specified by config
+    self.SCALE = scale
+    self.PADDING = padding
     return image
 
   def normalize_classname(self, class_name): # normalize the class name to one used by the model
@@ -173,13 +176,6 @@ class AMDataset(utils.Dataset):
       'gas porosity' : 'gas entrapment porosity'
     }
     return classes_dict.get(class_name)
-  
-  def get_scale_padding(self): # gets the scale and padding for the resize_mask function
-    if self.SCALE == -1 or self.PADDING == -1:
-      img, window, scale, padding = utils.resize_image(skimage.io.imread(self.image_info[1]['path']))
-      self.SCALE = scale
-      self.PADDING = padding
-    return self.SCALE, self.PADDING
 
 # set up train and validation data
 
@@ -202,7 +198,10 @@ if len(sys.argv) > 2: # optionally load pre-trained weights
 print(model.keras_model.summary())
 
 img = dataset_train.load_image(1)
-print("Shape: "+ str(img.shape))
+print("Shape: " + str(img.shape))
+print("PADDING: " + str(dataset_train.PADDING))
+mask = dataset_train.load_mask(1)
+print("Shape: " + str(mask.shape))
 
 # # train model
 # model.train(train_dataset=dataset_train,
