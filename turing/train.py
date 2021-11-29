@@ -18,6 +18,7 @@ import json
 import numpy as np
 import urllib.request
 import sys
+import skimage
 
 if len(sys.argv) < 2: # ensure model name is included in arguments
   sys.exit('Insufficient arguments')
@@ -128,8 +129,8 @@ class AMDataset(utils.Dataset):
         class_ids.append(self.class_names.index(key))
 
     # resize mask to proper size
-    scale, padding = self.get_scale_padding()
-    mask = self.resize_mask(mask, scale, padding)
+    # scale, padding = self.get_scale_padding()
+    # mask = self.resize_mask(mask, scale, padding)
     return mask, np.array(class_ids)
 
   def extract_boxes(self, filename): # helper to extract bounding boxes from json
