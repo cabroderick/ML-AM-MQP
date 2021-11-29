@@ -150,18 +150,18 @@ class AMDataset(utils.Dataset):
 
       return boxes
 
-  # def load_image(self, image_id): # override load image to enable resizing
-  #    # Load image
-  #   image = skimage.io.imread(self.image_info[image_id]['path'])
-  #   # If grayscale. Convert to RGB for consistency.
-  #   if image.ndim != 3:
-  #       image = skimage.color.gray2rgb(image)
-  #   # If has an alpha channel, remove it for consistency
-  #   if image.shape[-1] == 4:
-  #       image = image[..., :3]
+  def load_image(self, image_id): # override load image to enable resizing
+     # Load image
+    image = skimage.io.imread(self.image_info[image_id]['path'])
+    # If grayscale. Convert to RGB for consistency.
+    if image.ndim != 3:
+        image = skimage.color.gray2rgb(image)
+    # If has an alpha channel, remove it for consistency
+    if image.shape[-1] == 4:
+        image = image[..., :3]
 
-  #   image = utils.resize_image(image, min_dim=config.IMAGE_MIN_DIM, max_dim=config.IMAGE_MAX_DIM, mode='square') # resize to dims specified by config
-  #   return image
+    image, window, scale, padding = utils.resize_image(image, min_dim=config.IMAGE_MIN_DIM, max_dim=config.IMAGE_MAX_DIM, mode='square') # resize to dims specified by config
+    return image
 
   def normalize_classname(self, class_name): # normalize the class name to one used by the model
     class_name = class_name.lower() # remove capitalization
@@ -202,7 +202,7 @@ if len(sys.argv) > 2: # optionally load pre-trained weights
 print(model.keras_model.summary())
 
 img = dataset_train.load_image(1)
-print("Shape "+img.shape)
+print("Shape: "+ str(img.shape))
 
 # # train model
 # model.train(train_dataset=dataset_train,
