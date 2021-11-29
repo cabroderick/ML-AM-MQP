@@ -117,7 +117,7 @@ class AMDataset(utils.Dataset):
     for i in range(len(boxes)):
       box = boxes[i]
       for key in box:
-        mask = np.zeroes()
+        # mask = np.zeros()
 
         col_s, col_e = int(box[key][0][0]), int(box[key][1][0])
         row_s, row_e = int(box[key][0][1]), int(box[key][1][1])
@@ -145,10 +145,9 @@ class AMDataset(utils.Dataset):
           boxes.append(box) # add to list of extracted boxes
 
       for box in boxes:
-        (box.pop(key, None) for key in box.keys() if box[key] == []) # check if any keys contain no points and if so remove them from the dictionary
+        box = dict( [(k,v) for k,v in box.items() if len(v)>0]) # check if any keys contain no points and if so remove them from the dictionary
 
       print(boxes)
-
       return boxes
 
   def load_image(self, image_id): # override load image to enable resizing
