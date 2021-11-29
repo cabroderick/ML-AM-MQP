@@ -28,7 +28,7 @@ class CustomConfig(Config):
     NAME = "custom_mcrnn"
 
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 8
+    IMAGES_PER_GPU = 1
 
     # 3 classes + background
     NUM_CLASSES = 1 + 3 
@@ -40,8 +40,8 @@ class CustomConfig(Config):
     LEARNING_RATE = .001
 
     # specify image size for resizing
-    IMAGE_MIN_DIM = 128
-    IMAGE_MAX_DIM = 128
+    IMAGE_MIN_DIM = 256
+    IMAGE_MAX_DIM = 256
 
 config = CustomConfig()
 config.display()
@@ -51,8 +51,10 @@ class AMDataset(utils.Dataset):
   # define constants
   BASE_IMAGES_DIR = os.path.expanduser('~') + '/ML-AM-MQP/Data/Trial/' # directory where all images can be found
   BASE_ANNOTATIONS_DIR = os.path.expanduser('~') + '/ML-AM-MQP/Data/Trial/' # directory where all images labels can be found
-  IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
-  ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
+  # IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
+  # ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
+  IMAGES_DIRS = ['H6/'] # list of directories where images are contained
+  ANNOTATIONS_DIRS = ['Labeled H6/'] # corresponding list of directories where annotations are contained
 
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['gas entrapment porosity', 'lack of fusion porosity', 'keyhole porosity'] # all annotation classes
@@ -79,9 +81,9 @@ class AMDataset(utils.Dataset):
     total_images = len(image_paths) # count of all images to be processed
     val_images = (int) (total_images * (1-self.TRAIN_TEST_SPLIT)) # the total number of images in the validation set
 
-    print('Total images: ' + str(total_images))
-    print('Validation images: ' + str(val_images))
-    print('Training images: ' + str(total_images - val_images))
+    # print('Total images: ' + str(total_images))
+    # print('Validation images: ' + str(val_images))
+    # print('Training images: ' + str(total_images - val_images))
 
     # configure dataset
     for i in range(len(self.CLASSES)):
@@ -99,10 +101,10 @@ class AMDataset(utils.Dataset):
 
       image_path = image_paths[i]
       annotation_path = annotation_paths[i]
-      print("Image path: " + image_path)
-      print("Annotation path: " + annotation_path)
+      # print("Image path: " + image_path)
+      # print("Annotation path: " + annotation_path)
       image_id = image_path.split('/')[-1][:-4] # split the string by the '/' delimiter, get last element (filename), and remove file extension
-      print("Image id: " + image_id)
+      # print("Image id: " + image_id)
 
       self.add_image('dataset',
                      image_id=image_id, 
@@ -123,7 +125,7 @@ class AMDataset(utils.Dataset):
     mask = np.zeros([height, width, len(boxes)], dtype='uint8') # initialize array of masks for each bounding box
     for i in range(len(boxes)):
       box = boxes[i]
-      for key in box: # there is only one key per box so this happens once every timee
+      for key in box: # there is only one key per box so this happens once every time
         col_s, col_e = int(box[key][0][0]), int(box[key][1][0])
         row_s, row_e = int(box[key][0][1]), int(box[key][1][1])
         # print("Columns: " + str(col_s) + ", " + str(col_e))
@@ -204,7 +206,7 @@ print(model.keras_model.summary())
 model.train(train_dataset=dataset_train,
            val_dataset=dataset_val,
            learning_rate=.001,
-           epochs=5,
+           epochs=1,
            layers='heads')
 
 # save training results to external file
