@@ -130,7 +130,7 @@ class AMDataset(utils.Dataset):
 
     # resize mask to proper size
     scale, padding = self.get_scale_padding()
-    mask = self.resize_mask(mask, scale, padding)
+    mask = utils.resize_mask(mask, scale, padding)
     return mask, np.array(class_ids)
 
   def extract_boxes(self, filename): # helper to extract bounding boxes from json
@@ -160,7 +160,7 @@ class AMDataset(utils.Dataset):
     if image.shape[-1] == 4:
         image = image[..., :3]
 
-    image = self.resize_image(image, min_dim=config.IMAGE_MIN_DIM, max_dim=config.IMAGE_MAX_DIM, mode='square') # resize to dims specified by config
+    image = utils.resize_image(image, min_dim=config.IMAGE_MIN_DIM, max_dim=config.IMAGE_MAX_DIM, mode='square') # resize to dims specified by config
     return image
 
   def normalize_classname(self, class_name): # normalize the class name to one used by the model
@@ -176,7 +176,7 @@ class AMDataset(utils.Dataset):
   
   def get_scale_padding(self): # gets the scale and padding for the resize_mask function
     if self.SCALE == -1 or self.PADDING == -1:
-      img, window, scale, padding = self.resize_image(skimage.io.imread(self.image_info[1]['path']))
+      img, window, scale, padding = utils.resize_image(skimage.io.imread(self.image_info[1]['path']))
       self.SCALE = scale
       self.PADDING = padding
     return self.SCALE, self.PADDING
