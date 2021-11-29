@@ -197,18 +197,12 @@ if len(sys.argv) > 2: # optionally load pre-trained weights
 # print summary
 print(model.keras_model.summary())
 
-img = dataset_train.load_image(1)
-print("Shape: " + str(img.shape))
-print("PADDING: " + str(dataset_train.PADDING))
-mask = dataset_train.load_mask(1)
-print("Shape: " + str(mask.shape))
+# train model
+model.train(train_dataset=dataset_train,
+           val_dataset=dataset_val,
+           learning_rate=.001,
+           epochs=5,
+           layers='heads')
 
-# # train model
-# model.train(train_dataset=dataset_train,
-#            val_dataset=dataset_val,
-#            learning_rate=.001,
-#            epochs=5,
-#            layers='heads')
-
-# # save training results to external file
-# model.keras_model.save_weights(sys.argv[1]+'.h5')
+# save training results to external file
+model.keras_model.save_weights(sys.argv[1]+'.h5')
