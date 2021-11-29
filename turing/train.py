@@ -160,7 +160,7 @@ class AMDataset(utils.Dataset):
     if image.shape[-1] == 4:
         image = image[..., :3]
 
-    image, window, scale, padding = utils.resize_image(image, min_dim=config.IMAGE_MIN_DIM, max_dim=config.IMAGE_MAX_DIM, mode='square') # resize to dims specified by config
+    image, window, scale, padding, _ = utils.resize_image(image, min_dim=config.IMAGE_MIN_DIM, max_dim=config.IMAGE_MAX_DIM, mode='square') # resize to dims specified by config
     return image
 
   def normalize_classname(self, class_name): # normalize the class name to one used by the model
