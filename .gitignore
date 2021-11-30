@@ -1,2 +1,6 @@
-bfg.jar
+*.jar
 *.out
+*.iml
+*.xml
+*.name
+/.idea/.gitignore

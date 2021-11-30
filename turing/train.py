@@ -3,19 +3,17 @@ Mask RCNN model training on custom AM dataset for train use on WPI HPC cluster
 Usage: python train.py [model name] [optional pre-trained weights file path]
 '''
 
-from keras.preprocessing.image import load_img
-from keras.preprocessing.image import img_to_array
+import json
+import os
+import sys
+import matplotlib.pyplot as plt
+import numpy as np
+import skimage.draw
+import cv2
+from cv2 import imread
+from mrcnn import utils
 from mrcnn.config import Config
 from mrcnn.model import MaskRCNN
-from mrcnn import utils
-from mrcnn.model import log
-from cv2 import imread
-import os
-import json
-import numpy as np
-import sys
-import skimage.draw
-import matplotlib.pyplot as plt
 
 if len(sys.argv) < 2: # ensure model name is included in arguments
   sys.exit('Insufficient arguments')
@@ -45,8 +43,8 @@ config = CustomConfig()
 class CustomDataset(utils.Dataset):
 
   # define constants
-  BASE_IMAGES_DIR = os.path.expanduser('~') + '/ML-AM-MQP/Data/Trial/' # directory where all images can be found
-  BASE_ANNOTATIONS_DIR = os.path.expanduser('~') + '/ML-AM-MQP/Data/Trial/' # directory where all images labels can be found
+  BASE_IMAGES_DIR = '../Data/Trial/' # directory where all images can be found
+  BASE_ANNOTATIONS_DIR = '../Data/Trial/' # directory where all images labels can be found
   IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
   ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
@@ -138,13 +136,16 @@ class CustomDataset(utils.Dataset):
       if shape['shape_type'] == 'rectangle':
         col_min, col_max = int(shape['points'][0][0]), int(shape['points'][1][0])
         row_min, row_max = int(shape['points'][0][1]), int(shape['points'][1][1])
-        print(col_min, col_max, row_min, row_max)
+        cropped_img = image[col_min:col_max, row_min:row_max] # crop image to size
+        cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+        
+        plt.imshow(image)
+        plt.show()
+
+        exit(0)
         class_label = self.normalize_classname(shape['label'])
         num_id = self.CLASSES.index(class_label) # add id corresponding to label to ids list
         num_ids.append(num_id) # append to ids list
-        cropped_img = image[col_min:col_max, row_min:row_max] # crop image to size
-        imgplot = plt.imshow(image)
-        plt.show()
 
     return boxes, num_ids
 
