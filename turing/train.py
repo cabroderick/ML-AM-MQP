@@ -140,18 +140,35 @@ class CustomDataset(utils.Dataset):
         # im_copy = cropped_img.copy()
         cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
         edged = cv2.Canny(cropped_img_gray, 30, 200)
-        # ret, thresh = cv2.threshold(cropped_img, 127, 255, 0)
-        contours, hierarchy = cv2.findContours(edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) # exract contours from sub region
 
-        # hull = []
-        # for c in contours:
-        #   hull.append(cv2.convexHull(c, False))
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+        dilated = cv2.dilate(edged, kernel)
+        contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # contours, hierarchy = cv2.findContours(edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) # exract contours from sub region
+
+        hull = []
+        for c in contours:
+          hull.append(cv2.convexHull(c, False))
+
+        polygon = np.zeros(cropped_img.shape)
+        color = [255, 255, 255]
+
+        cv2.fillPoly(polygon, contours, color)
 
         cv2.drawContours(cropped_img, contours, -1, (0, 255, 0), 1)
-        # cv2.drawContours(cropped_img, )
+
+
+        # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 20))
+        # opening = cv2.morphologyEx(cropped_img, cv2.MORPH_OPEN, kernel, iterations=2)
+        # cv2.drawContours(cropped_img, hull, -1, (255, 0, 0), 1)
 
         imS = cv2.resize(cropped_img, (512, 512))
         cv2.imshow('Contours', imS)
+        cv2.waitKey(0)
+
+        cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
         cv2.waitKey(0)
 
         class_label = self.normalize_classname(shape['label'])
