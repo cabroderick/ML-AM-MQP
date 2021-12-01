@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage.draw
 import cv2
-from cv2 import imread
 from mrcnn import utils
 from mrcnn.config import Config
 from mrcnn.model import MaskRCNN
@@ -91,7 +90,7 @@ class CustomDataset(utils.Dataset):
       annotation_path = annotation_paths[i]
       image_id = image_path.split('/')[-1][:-4] # split the string by the '/' delimiter, get last element (filename), and remove file extension
 
-      polygons, num_ids = self.extract_polygons(image_path, annotation_path)
+      polygons, class_ids = self.extract_polygons(image_path, annotation_path)
 
       self.add_image('dataset',
                      image_id=image_id, 
@@ -100,7 +99,7 @@ class CustomDataset(utils.Dataset):
                      width=self.IMG_WIDTH,
                      height=self.IMG_HEIGHT,
                      polygons=polygons,
-                     num_ids=num_ids)
+                     class_ids=class_ids)
 
   '''
   Extracts a mask from an image
@@ -110,13 +109,13 @@ class CustomDataset(utils.Dataset):
   def load_mask(self, image_id): # extracts all masks corresponding to a single image id
     info = self.image_info[image_id] # extract image info from data added earlier
     mask = np.zeros([info['height'], info['width'], len(info['polygons'])], dtype='uint8') # initialize array of masks for each bounding box
-    num_ids = info['num_ids']
+    class_ids = info['class_ids']
 
     for i, p in enumerate(info['polygons']):
       rr, cc = skimage.draw.polygon(p['y'], p['x'])
       mask[rr, cc, i] = 1
 
-    return mask.astype(np.bool), np.array(num_ids, dtype=np.int32)
+    return mask.astype(np.bool), np.array(class_ids, dtype=np.int32)
 
   '''
   Extracts the polygon data from an image and its respective annotation
@@ -125,29 +124,34 @@ class CustomDataset(utils.Dataset):
   Returns a list of polygons and a list of class ids
   '''
   def extract_polygons(self, image_path, annotation_path): # helper to extract bounding boxes from json
-    boxes = []
-    num_ids = []
+    print(image_path, annotation_path)
+    polygons = []
+    class_ids = []
     f_ann = open(annotation_path,)
     annotation = json.load(f_ann)
-    image = imread(image_path)
+    image = cv2.imread(image_path)
+
+    print(len(annotation['shapes']))
 
     # extract coordinate data (only from rectangles for now)
     for shape in annotation['shapes']:
       if shape['shape_type'] == 'rectangle':
         col_min, col_max = int(shape['points'][0][0]), int(shape['points'][1][0])
         row_min, row_max = int(shape['points'][0][1]), int(shape['points'][1][1])
-        cropped_img = image[col_min:col_max, row_min:row_max] # crop image to size
+        cropped_img = image[row_min:row_max, col_min:col_max] # crop image to size of bounding box
+        im_copy = cropped_img.copy()
         cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
-        
-        plt.imshow(image)
-        plt.show()
+        ret, thresh = cv2.threshold(cropped_img, 127, 255, 0)
+        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) # exract contours from sub region
+        cv2.drawContours(cropped_img, contours, -1, (255, 252, 3), 3)
+        cv2.imshow('draw contours', im_copy)
+        # plt.show()
 
-        exit(0)
         class_label = self.normalize_classname(shape['label'])
-        num_id = self.CLASSES.index(class_label) # add id corresponding to label to ids list
-        num_ids.append(num_id) # append to ids list
+        class_id = self.CLASSES.index(class_label)
+        class_ids.append(class_id)
 
-    return boxes, num_ids
+    return polygons, class_ids
 
   # def load_image(self, image_id): # override load image to enable resizing
   #    # Load image
