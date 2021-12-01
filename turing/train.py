@@ -131,21 +131,28 @@ class CustomDataset(utils.Dataset):
     annotation = json.load(f_ann)
     image = cv2.imread(image_path)
 
-    print(len(annotation['shapes']))
-
     # extract coordinate data (only from rectangles for now)
     for shape in annotation['shapes']:
       if shape['shape_type'] == 'rectangle':
         col_min, col_max = int(shape['points'][0][0]), int(shape['points'][1][0])
         row_min, row_max = int(shape['points'][0][1]), int(shape['points'][1][1])
         cropped_img = image[row_min:row_max, col_min:col_max] # crop image to size of bounding box
-        im_copy = cropped_img.copy()
-        cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
-        ret, thresh = cv2.threshold(cropped_img, 127, 255, 0)
-        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) # exract contours from sub region
-        cv2.drawContours(cropped_img, contours, -1, (255, 252, 3), 3)
-        cv2.imshow('draw contours', im_copy)
-        # plt.show()
+        # im_copy = cropped_img.copy()
+        cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+        edged = cv2.Canny(cropped_img_gray, 30, 200)
+        # ret, thresh = cv2.threshold(cropped_img, 127, 255, 0)
+        contours, hierarchy = cv2.findContours(edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) # exract contours from sub region
+
+        # hull = []
+        # for c in contours:
+        #   hull.append(cv2.convexHull(c, False))
+
+        cv2.drawContours(cropped_img, contours, -1, (0, 255, 0), 1)
+        # cv2.drawContours(cropped_img, )
+
+        imS = cv2.resize(cropped_img, (512, 512))
+        cv2.imshow('Contours', imS)
+        cv2.waitKey(0)
 
         class_label = self.normalize_classname(shape['label'])
         class_id = self.CLASSES.index(class_label)
