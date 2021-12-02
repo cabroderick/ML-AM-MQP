@@ -7,7 +7,6 @@ import json
 import os
 import sys
 import numpy as np
-import skimage.draw
 import cv2
 from mrcnn import utils
 from mrcnn.config import Config
@@ -21,15 +20,12 @@ if len(sys.argv) < 2: # ensure model name is included in arguments
 ######################################
 class CustomConfig(Config):
     NAME = "custom_mcrnn"
-    # GPU_COUNT = 1
-    # IMAGES_PER_GPU = 1
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 1
     NUM_CLASSES = 1 + 3 # 3 classes + background
     STEPS_PER_EPOCH = 100
     VALIDATION_STEPS = 5
     LEARNING_RATE = .001
-    # specify image size for resizing
-    # IMAGE_MIN_DIM = 512
-    # IMAGE_MAX_DIM = 512
     BATCH_SIZE = 1
 
 config = CustomConfig()
@@ -43,14 +39,10 @@ class CustomDataset(utils.Dataset):
   # define constants
   BASE_IMAGES_DIR = '../Data/Trial/' # directory where all images can be found
   BASE_ANNOTATIONS_DIR = '../Data/Trial/' # directory where all images labels can be found
-  IMAGES_DIRS = ['H6/'] # list of directories where images are contained
-  ANNOTATIONS_DIRS = ['Labeled H6/'] # corresponding list of directories where annotations are contained
+  IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
+  ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['gas entrapment porosity', 'lack of fusion porosity', 'keyhole porosity'] # all annotation classes
-  IMG_WIDTH = 1280
-  IMG_HEIGHT = 1024
-  # SCALE = -1 # to be used for resize_mask
-  # PADDING = -1 # to be used for resize_mask
 
   '''
   Loads the dataset
@@ -59,11 +51,16 @@ class CustomDataset(utils.Dataset):
   def load_dataset(self, validation=False):
     image_paths = []
     annotation_paths = []
+    image_ids = []
 
-    for subdir in self.IMAGES_DIRS:
-      [image_paths.append(self.BASE_IMAGES_DIR + subdir + dir) for dir in sorted(os.listdir(self.BASE_IMAGES_DIR+subdir))] # create the list of all image paths
-    for subdir in self.ANNOTATIONS_DIRS:
-      [annotation_paths.append(self.BASE_ANNOTATIONS_DIR + subdir + dir) for dir in sorted(os.listdir(self.BASE_ANNOTATIONS_DIR+subdir))] # create the list of all annotation paths
+    for i in range(len(self.IMAGES_DIRS)):
+      i_dir = self.BASE_IMAGES_DIR + self.IMAGES_DIRS[i]
+      a_dir = self.BASE_ANNOTATIONS_DIR + self.ANNOTATIONS_DIRS[i]
+      for file in os.listdir(i_dir):
+        i_id = file[:-4]
+        image_ids.append(i_id)
+        image_paths.append(i_dir+i_id+'.tif')
+        annotation_paths.append(a_dir+i_id+'_20X_YZ.json')
     
     if (len(image_paths) != len(annotation_paths)): # raise exception if mismatch betwaeen number of images and annotations
       raise(ValueError('Number of images and annotations must be equal'))
@@ -85,19 +82,16 @@ class CustomDataset(utils.Dataset):
         val_images_counter += 1
         continue
 
+      image_id = image_ids[i]
       image_path = image_paths[i]
       annotation_path = annotation_paths[i]
-      print(image_path, annotation_path)
-      image_id = image_path.split('/')[-1][:-4] # split the string by the '/' delimiter, get last element (filename), and remove file extension
+      # print(image_id, image_path, annotation_path)
 
       mask, class_ids = self.extract_mask(image_path, annotation_path)
 
       self.add_image('dataset',
                      image_id=image_id, 
-                     path=image_path, 
-                     annotation=annotation_path,
-                     width=self.IMG_WIDTH,
-                     height=self.IMG_HEIGHT,
+                     path=image_path,
                      mask=mask,
                      class_ids=class_ids)
 
@@ -106,7 +100,7 @@ class CustomDataset(utils.Dataset):
   image_id: The image id to extract the mask from
   Returns a mask and a corresponding list of class ids
   '''
-  def load_mask(self, image_id): # extracts all masks corresponding to a single image id
+  def load_mask(self, image_id):
     info = self.image_info[image_id] # extract image info from data added earlier
     mask = info['mask']
     class_ids = info['class_ids']
@@ -119,7 +113,7 @@ class CustomDataset(utils.Dataset):
   annotation_path: Path to the annotation
   Returns a mask and a list of class ids
   '''
-  def extract_mask(self, image_path, annotation_path): # helper to extract bounding boxes from json
+  def extract_mask(self, image_path, annotation_path):
     class_ids = []
     f_ann = open(annotation_path,)
     annotation_json = json.load(f_ann)
@@ -149,7 +143,7 @@ class CustomDataset(utils.Dataset):
       cv2.fillPoly(polygon, contours, color)
 
       # normalize polygon to all boolean values and insert into mask
-      polygon_bool = np.alltrue(polygon == [255, 255, 255], axis=2)
+      polygon_bool = np.alltrue(polygon == color, axis=2)
       mask[row_min:row_max, col_min:col_max, i] = polygon_bool
 
       # # draw contour and mask
@@ -195,8 +189,6 @@ dataset_val.prepare()
 # configure model
 
 model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomConfig())
-
-exit(0)
 
 if len(sys.argv) > 2: # optionally load pre-trained weights
   model.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
