@@ -6,7 +6,6 @@ Usage: python train.py [model name] [optional pre-trained weights file path]
 import json
 import os
 import sys
-import matplotlib.pyplot as plt
 import numpy as np
 import skimage.draw
 import cv2
@@ -44,8 +43,8 @@ class CustomDataset(utils.Dataset):
   # define constants
   BASE_IMAGES_DIR = '../Data/Trial/' # directory where all images can be found
   BASE_ANNOTATIONS_DIR = '../Data/Trial/' # directory where all images labels can be found
-  IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
-  ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
+  IMAGES_DIRS = ['H6/'] # list of directories where images are contained
+  ANNOTATIONS_DIRS = ['Labeled H6/'] # corresponding list of directories where annotations are contained
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['gas entrapment porosity', 'lack of fusion porosity', 'keyhole porosity'] # all annotation classes
   IMG_WIDTH = 1280
@@ -88,9 +87,10 @@ class CustomDataset(utils.Dataset):
 
       image_path = image_paths[i]
       annotation_path = annotation_paths[i]
+      print(image_path, annotation_path)
       image_id = image_path.split('/')[-1][:-4] # split the string by the '/' delimiter, get last element (filename), and remove file extension
 
-      polygons, class_ids = self.extract_polygons(image_path, annotation_path)
+      mask, class_ids = self.extract_mask(image_path, annotation_path)
 
       self.add_image('dataset',
                      image_id=image_id, 
@@ -98,7 +98,7 @@ class CustomDataset(utils.Dataset):
                      annotation=annotation_path,
                      width=self.IMG_WIDTH,
                      height=self.IMG_HEIGHT,
-                     polygons=polygons,
+                     mask=mask,
                      class_ids=class_ids)
 
   '''
@@ -108,89 +108,64 @@ class CustomDataset(utils.Dataset):
   '''
   def load_mask(self, image_id): # extracts all masks corresponding to a single image id
     info = self.image_info[image_id] # extract image info from data added earlier
-    mask = np.zeros([info['height'], info['width'], len(info['polygons'])], dtype='uint8') # initialize array of masks for each bounding box
+    mask = info['mask']
     class_ids = info['class_ids']
 
-    for i, p in enumerate(info['polygons']):
-      rr, cc = skimage.draw.polygon(p['y'], p['x'])
-      mask[rr, cc, i] = 1
-
-    return mask.astype(np.bool), np.array(class_ids, dtype=np.int32)
+    return mask, class_ids
 
   '''
-  Extracts the polygon data from an image and its respective annotation
+  Extracts the mask data from an image and its respective annotation
   image_path: Path to the image
   annotation_path: Path to the annotation
-  Returns a list of polygons and a list of class ids
+  Returns a mask and a list of class ids
   '''
-  def extract_polygons(self, image_path, annotation_path): # helper to extract bounding boxes from json
-    print(image_path, annotation_path)
-    polygons = []
+  def extract_mask(self, image_path, annotation_path): # helper to extract bounding boxes from json
     class_ids = []
     f_ann = open(annotation_path,)
-    annotation = json.load(f_ann)
+    annotation_json = json.load(f_ann)
     image = cv2.imread(image_path)
+    height = image.shape[0]
+    width = image.shape[1]
 
-    # extract coordinate data (only from rectangles for now)
-    for shape in annotation['shapes']:
-      if shape['shape_type'] == 'rectangle':
-        col_min, col_max = int(shape['points'][0][0]), int(shape['points'][1][0])
-        row_min, row_max = int(shape['points'][0][1]), int(shape['points'][1][1])
-        cropped_img = image[row_min:row_max, col_min:col_max] # crop image to size of bounding box
-        # im_copy = cropped_img.copy()
-        cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
-        edged = cv2.Canny(cropped_img_gray, 30, 200)
+    annotation_list = []
+    [annotation_list.append(shape) for shape in annotation_json['shapes'] if shape['shape_type'] =='rectangle'] # get annotations in a list
+    mask = np.zeros([height, width, len(annotation_list)], dtype='uint8') # initialize array of masks for each bounding box
 
+    for i in range(len(annotation_list)):
+      a = annotation_list[i]
+      # extract row and col data and crop image to annotation size
+      col_min, col_max = int(min(a['points'][0][0], a['points'][1][0])), int(max(a['points'][0][0], a['points'][1][0]))
+      row_min, row_max = int(min(a['points'][0][1], a['points'][1][1])), int(max(a['points'][0][1], a['points'][1][1]))
+      cropped_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
+      cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+      edged = cv2.Canny(cropped_img_gray, 30, 200)
 
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-        dilated = cv2.dilate(edged, kernel)
-        contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+      # apply contour to image and fill
+      kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+      dilated = cv2.dilate(edged, kernel)
+      contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+      polygon = np.zeros(cropped_img.shape)
+      color = [255, 255, 255]
+      cv2.fillPoly(polygon, contours, color)
 
-        # contours, hierarchy = cv2.findContours(edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) # exract contours from sub region
+      # normalize polygon to all boolean values and insert into mask
+      polygon_bool = np.alltrue(polygon == [255, 255, 255], axis=2)
+      mask[row_min:row_max, col_min:col_max, i] = polygon_bool
 
-        hull = []
-        for c in contours:
-          hull.append(cv2.convexHull(c, False))
+      # # draw contour and mask
+      # cv2.drawContours(cropped_img, contours, -1, (0, 255, 0), 1)
+      # imS = cv2.resize(cropped_img, (512, 512))
+      # cv2.imshow('Contours', imS)
+      # cv2.waitKey(0)
+      # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
+      # cv2.waitKey(0)
 
-        polygon = np.zeros(cropped_img.shape)
-        color = [255, 255, 255]
+      # extract class id and append to list
+      class_label = self.normalize_classname(a['label'])
+      class_id = self.CLASSES.index(class_label)
+      class_ids.append(class_id)
 
-        cv2.fillPoly(polygon, contours, color)
-
-        cv2.drawContours(cropped_img, contours, -1, (0, 255, 0), 1)
-
-
-        # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 20))
-        # opening = cv2.morphologyEx(cropped_img, cv2.MORPH_OPEN, kernel, iterations=2)
-        # cv2.drawContours(cropped_img, hull, -1, (255, 0, 0), 1)
-
-        imS = cv2.resize(cropped_img, (512, 512))
-        cv2.imshow('Contours', imS)
-        cv2.waitKey(0)
-
-        cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
-        cv2.waitKey(0)
-
-        class_label = self.normalize_classname(shape['label'])
-        class_id = self.CLASSES.index(class_label)
-        class_ids.append(class_id)
-
-    return polygons, class_ids
-
-  # def load_image(self, image_id): # override load image to enable resizing
-  #    # Load image
-  #   image = skimage.io.imread(self.image_info[image_id]['path'])
-  #   # If grayscale. Convert to RGB for consistency.
-  #   if image.ndim != 3:
-  #       image = skimage.color.gray2rgb(image)
-  #   # If has an alpha channel, remove it for consistency
-  #   if image.shape[-1] == 4:
-  #       image = image[..., :3]
-
-  #   image, window, scale, padding, _ = utils.resize_image(image, min_dim=config.IMAGE_MIN_DIM, max_dim=config.IMAGE_MAX_DIM, mode='square') # resize to dims specified by config
-  #   self.SCALE = scale
-  #   self.PADDING = padding
-  #   return image
+    return mask.astype(np.bool), np.array(class_ids, dtype=np.int32)
 
   def normalize_classname(self, class_name): # normalize the class name to one used by the model
     class_name = class_name.lower() # remove capitalization
