@@ -12,6 +12,8 @@ from mrcnn import utils
 from mrcnn.config import Config
 from mrcnn.model import MaskRCNN
 
+BORDER_WIDTH = 5
+
 if len(sys.argv) < 2: # ensure model name is included in arguments
   sys.exit('Insufficient arguments')
 
@@ -133,26 +135,28 @@ class CustomDataset(utils.Dataset):
       cropped_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
       cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
       edged = cv2.Canny(cropped_img_gray, 30, 200)
+      border = cv2.copyMakeBorder(edged, BORDER_WIDTH, BORDER_WIDTH,BORDER_WIDTH,BORDER_WIDTH, cv2.BORDER_CONSTANT,
+                                      value=[0, 0, 0])
 
       # apply contour to image and fill
       kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-      dilated = cv2.dilate(edged, kernel)
+      dilated = cv2.dilate(border, kernel)
       contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-      polygon = np.zeros(cropped_img.shape)
+      polygon = np.zeros(border.shape)
       color = [255, 255, 255]
       cv2.fillPoly(polygon, contours, color)
 
       # normalize polygon to all boolean values and insert into mask
-      polygon_bool = np.alltrue(polygon == color, axis=2)
-      mask[row_min:row_max, col_min:col_max, i] = polygon_bool
+      polygon_bool = np.alltrue(polygon == color)
+      mask[row_min+BORDER_WIDTH:row_max-BORDER_WIDTH, col_min+BORDER_WIDTH:col_max-BORDER_WIDTH, i] = polygon_bool
 
-      # # draw contour and mask
-      # cv2.drawContours(cropped_img, contours, -1, (0, 255, 0), 1)
-      # imS = cv2.resize(cropped_img, (512, 512))
-      # cv2.imshow('Contours', imS)
-      # cv2.waitKey(0)
-      # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
-      # cv2.waitKey(0)
+       # draw contour and mask
+      cv2.drawContours(border, contours, -1, (0, 255, 0), 1)
+      imS = cv2.resize(border, (512, 512))
+      cv2.imshow('Contours', imS)
+      cv2.waitKey(0)
+      cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
+      cv2.waitKey(0)
 
       # extract class id and append to list
       class_label = self.normalize_classname(a['label'])
@@ -192,7 +196,6 @@ model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomC
 
 if len(sys.argv) > 2: # optionally load pre-trained weights
   model.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
-
 # print summary
 print(model.keras_model.summary())
 
