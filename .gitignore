@@ -3,4 +3,5 @@
 *.iml
 *.xml
 *.name
+*.h5
 /.idea/.gitignore
