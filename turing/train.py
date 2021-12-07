@@ -41,8 +41,8 @@ class CustomDataset(utils.Dataset):
   # define constants
   BASE_IMAGES_DIR = '../Data/Trial/' # directory where all images can be found
   BASE_ANNOTATIONS_DIR = '../Data/Trial/' # directory where all images labels can be found
-  IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
-  ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
+  IMAGES_DIRS = ['H6_subset/'] # list of directories where images are contained
+  ANNOTATIONS_DIRS = ['Labeled H6/'] # corresponding list of directories where annotations are contained
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['gas entrapment porosity', 'lack of fusion porosity', 'keyhole porosity'] # all annotation classes
 
@@ -151,12 +151,12 @@ class CustomDataset(utils.Dataset):
       mask[row_min+BORDER_WIDTH:row_max-BORDER_WIDTH, col_min+BORDER_WIDTH:col_max-BORDER_WIDTH, i] = polygon_bool
 
        # draw contour and mask
-      cv2.drawContours(border, contours, -1, (0, 255, 0), 1)
-      imS = cv2.resize(border, (512, 512))
-      cv2.imshow('Contours', imS)
-      cv2.waitKey(0)
-      cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
-      cv2.waitKey(0)
+      # cv2.drawContours(border, contours, -1, (0, 255, 0), 1)
+      # imS = cv2.resize(border, (512, 512))
+      # cv2.imshow('Contours', imS)
+      # cv2.waitKey(0)
+      # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
+      # cv2.waitKey(0)
 
       # extract class id and append to list
       class_label = self.normalize_classname(a['label'])
