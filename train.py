@@ -12,8 +12,6 @@ from mrcnn import utils
 from mrcnn.config import Config
 from mrcnn.model import MaskRCNN
 
-BORDER_WIDTH = 5
-
 if len(sys.argv) < 2: # ensure model name is included in arguments
   sys.exit('Insufficient arguments')
 
@@ -31,7 +29,6 @@ class CustomConfig(Config):
     BATCH_SIZE = 1
 
 config = CustomConfig()
-# config.display()
 
 #######################################
 # Dataset
@@ -39,10 +36,10 @@ config = CustomConfig()
 class CustomDataset(utils.Dataset):
 
   # define constants
-  BASE_IMAGES_DIR = '../Data/Trial/' # directory where all images can be found
-  BASE_ANNOTATIONS_DIR = '../Data/Trial/' # directory where all images labels can be found
-  IMAGES_DIRS = ['H6_subset/'] # list of directories where images are contained
-  ANNOTATIONS_DIRS = ['Labeled H6/'] # corresponding list of directories where annotations are contained
+  BASE_IMAGES_DIR = './Data/Trial/' # directory where all images can be found
+  BASE_ANNOTATIONS_DIR = './Data/Trial/' # directory where all images labels can be found
+  IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
+  ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['gas entrapment porosity', 'lack of fusion porosity', 'keyhole porosity'] # all annotation classes
 
@@ -63,7 +60,7 @@ class CustomDataset(utils.Dataset):
         image_ids.append(i_id)
         image_paths.append(i_dir+i_id+'.tif')
         annotation_paths.append(a_dir+i_id+'_20X_YZ.json')
-    
+
     if (len(image_paths) != len(annotation_paths)): # raise exception if mismatch betwaeen number of images and annotations
       raise(ValueError('Number of images and annotations must be equal'))
 
@@ -87,12 +84,11 @@ class CustomDataset(utils.Dataset):
       image_id = image_ids[i]
       image_path = image_paths[i]
       annotation_path = annotation_paths[i]
-      # print(image_id, image_path, annotation_path)
 
       mask, class_ids = self.extract_mask(image_path, annotation_path)
 
       self.add_image('dataset',
-                     image_id=image_id, 
+                     image_id=image_id,
                      path=image_path,
                      mask=mask,
                      class_ids=class_ids)
@@ -103,6 +99,7 @@ class CustomDataset(utils.Dataset):
   Returns a mask and a corresponding list of class ids
   '''
   def load_mask(self, image_id):
+
     info = self.image_info[image_id] # extract image info from data added earlier
     mask = info['mask']
     class_ids = info['class_ids']
@@ -135,22 +132,20 @@ class CustomDataset(utils.Dataset):
       cropped_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
       cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
       edged = cv2.Canny(cropped_img_gray, 30, 200)
-      border = cv2.copyMakeBorder(edged, BORDER_WIDTH, BORDER_WIDTH,BORDER_WIDTH,BORDER_WIDTH, cv2.BORDER_CONSTANT,
-                                      value=[0, 0, 0])
 
       # apply contour to image and fill
       kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-      dilated = cv2.dilate(border, kernel)
+      dilated = cv2.dilate(edged, kernel)
       contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-      polygon = np.zeros(border.shape)
+      polygon = np.zeros(cropped_img.shape)
       color = [255, 255, 255]
       cv2.fillPoly(polygon, contours, color)
 
       # normalize polygon to all boolean values and insert into mask
-      polygon_bool = np.alltrue(polygon == color)
-      mask[row_min+BORDER_WIDTH:row_max-BORDER_WIDTH, col_min+BORDER_WIDTH:col_max-BORDER_WIDTH, i] = polygon_bool
+      polygon_bool = np.alltrue(polygon == color, axis=2)
+      mask[row_min:row_max, col_min:col_max, i] = polygon_bool
 
-       # draw contour and mask
+      # draw contour and mask
       # cv2.drawContours(border, contours, -1, (0, 255, 0), 1)
       # imS = cv2.resize(border, (512, 512))
       # cv2.imshow('Contours', imS)
@@ -191,19 +186,16 @@ dataset_val.load_dataset(validation=True)
 dataset_val.prepare()
 
 # configure model
-
 model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomConfig())
 
 if len(sys.argv) > 2: # optionally load pre-trained weights
   model.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
-# print summary
-print(model.keras_model.summary())
 
 # train model
 model.train(train_dataset=dataset_train,
            val_dataset=dataset_val,
            learning_rate=config.LEARNING_RATE,
-           epochs=1,
+           epochs=20,
            layers='heads')
 
 # save training results to external file
