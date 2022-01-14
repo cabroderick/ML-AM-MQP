@@ -65,33 +65,66 @@ class CustomDataset(utils.Dataset):
       raise(ValueError('Number of images and annotations must be equal'))
 
     total_images = len(image_paths) # count of all images to be processed
+    total_images_path = int(total_images / len(self.IMAGES_DIRS)) # count of images per subdirectory
     val_images = (int) (total_images * (1-self.TRAIN_TEST_SPLIT)) # the total number of images in the validation set
+    val_images_path = int(val_images / len(self.IMAGES_DIRS)) # number of validation images per subdirectory
 
     # configure dataset
     for i in range(len(self.CLASSES)):
       self.add_class('dataset', i+1, self.CLASSES[i]) # add classes to model
 
-    val_images_counter = val_images # counter to keep track of remaining images for validation set
+    # add images to dataset, ensuring even distribution from each subdirectory
+    for i in range(len(self.IMAGES_DIRS)):
+      if validation:
+        for j in range(val_images_path):
+          index = i * total_images_path + j
+          image_id = image_ids[index]
+          image_path = image_paths[index]
+          annotation_path = annotation_paths[index]
 
-    for i in range(total_images):
-      if validation and val_images_counter > 0:
-        val_images_counter -=1
-        continue
-      if (not validation) and val_images_counter < total_images:
-        val_images_counter += 1
-        continue
+          mask, class_ids = self.extract_mask(image_path, annotation_path)
 
-      image_id = image_ids[i]
-      image_path = image_paths[i]
-      annotation_path = annotation_paths[i]
+          self.add_image('dataset',
+                         image_id=image_id,
+                         path=image_path,
+                         mask=mask,
+                         class_ids=class_ids)
+      else:
+        for j in range(total_images_path - val_images_path):
+          index = i * total_images_path + j + val_images_path
+          image_id = image_ids[index]
+          image_path = image_paths[index]
+          annotation_path = annotation_paths[index]
 
-      mask, class_ids = self.extract_mask(image_path, annotation_path)
+          mask, class_ids = self.extract_mask(image_path, annotation_path)
 
-      self.add_image('dataset',
-                     image_id=image_id,
-                     path=image_path,
-                     mask=mask,
-                     class_ids=class_ids)
+          self.add_image('dataset',
+                         image_id=image_id,
+                         path=image_path,
+                         mask=mask,
+                         class_ids=class_ids)
+
+    # val_images_counter = val_images # counter to keep track of remaining images for validation set
+    #
+    # for i in range(total_images):
+    #   if validation and val_images_counter > 0:
+    #     val_images_counter -=1
+    #     continue
+    #   if (not validation) and val_images_counter < total_images:
+    #     val_images_counter += 1
+    #     continue
+    #
+    #   image_id = image_ids[i]
+    #   image_path = image_paths[i]
+    #   annotation_path = annotation_paths[i]
+    #
+    #   mask, class_ids = self.extract_mask(image_path, annotation_path)
+    #
+    #   self.add_image('dataset',
+    #                  image_id=image_id,
+    #                  path=image_path,
+    #                  mask=mask,
+    #                  class_ids=class_ids)
 
   '''
   Extracts a mask from an image
@@ -146,8 +179,8 @@ class CustomDataset(utils.Dataset):
       mask[row_min:row_max, col_min:col_max, i] = polygon_bool
 
       # draw contour and mask
-      # cv2.drawContours(border, contours, -1, (0, 255, 0), 1)
-      # imS = cv2.resize(border, (512, 512))
+      # cv2.drawContours(edged, contours, -1, (0, 255, 0), 1)
+      # imS = cv2.resize(edged, (512, 512))
       # cv2.imshow('Contours', imS)
       # cv2.waitKey(0)
       # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
