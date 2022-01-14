@@ -53,34 +53,39 @@ class CustomDataset(utils.Dataset):
     image_ids = []
 
     for i in range(len(self.IMAGES_DIRS)):
+      image_paths.append([])
+      annotation_paths.append([])
+      image_ids.append([])
       i_dir = self.BASE_IMAGES_DIR + self.IMAGES_DIRS[i]
       a_dir = self.BASE_ANNOTATIONS_DIR + self.ANNOTATIONS_DIRS[i]
       for file in os.listdir(i_dir):
         i_id = file[:-4]
-        image_ids.append(i_id)
-        image_paths.append(i_dir+i_id+'.tif')
-        annotation_paths.append(a_dir+i_id+'_20X_YZ.json')
+        image_ids[i].append(i_id)
+        image_paths[i].append(i_dir+i_id+'.tif')
+        annotation_paths[i].append(a_dir+i_id+'_20X_YZ.json')
 
     if (len(image_paths) != len(annotation_paths)): # raise exception if mismatch betwaeen number of images and annotations
       raise(ValueError('Number of images and annotations must be equal'))
 
-    total_images = len(image_paths) # count of all images to be processed
-    total_images_path = int(total_images / len(self.IMAGES_DIRS)) # count of images per subdirectory
-    val_images = (int) (total_images * (1-self.TRAIN_TEST_SPLIT)) # the total number of images in the validation set
-    val_images_path = int(val_images / len(self.IMAGES_DIRS)) # number of validation images per subdirectory
+    # total_images = len(image_paths) # count of all images to be processed
+    # total_images_path = int(total_images / len(self.IMAGES_DIRS)) # count of images per subdirectory
+    # val_images = (int) (total_images * (1-self.TRAIN_TEST_SPLIT)) # the total number of images in the validation set
+    # val_images_path = int(val_images / len(self.IMAGES_DIRS)) # number of validation images per subdirectory
 
     # configure dataset
     for i in range(len(self.CLASSES)):
       self.add_class('dataset', i+1, self.CLASSES[i]) # add classes to model
 
-    # add images to dataset, ensuring even distribution from each subdirectory
-    for i in range(len(self.IMAGES_DIRS)):
+    # add images and annotations to dataset, ensuring an even distribution
+    for i in range(len(image_paths)):
+      images = len(image_paths[i])
+      train_images = int(images * self.TRAIN_TEST_SPLIT)
+      val_images = int(images * (1 - self.TRAIN_TEST_SPLIT))
       if validation:
-        for j in range(val_images_path):
-          index = i * total_images_path + j
-          image_id = image_ids[index]
-          image_path = image_paths[index]
-          annotation_path = annotation_paths[index]
+        for j in range(val_images):
+          image_id = image_ids[i][j]
+          image_path = image_paths[i][j]
+          annotation_path = annotation_paths[i][j]
 
           mask, class_ids = self.extract_mask(image_path, annotation_path)
 
@@ -90,11 +95,10 @@ class CustomDataset(utils.Dataset):
                          mask=mask,
                          class_ids=class_ids)
       else:
-        for j in range(total_images_path - val_images_path):
-          index = i * total_images_path + j + val_images_path
-          image_id = image_ids[index]
-          image_path = image_paths[index]
-          annotation_path = annotation_paths[index]
+        for j in range(train_images):
+          image_id = image_ids[i][j + val_images]
+          image_path = image_paths[i][j + val_images]
+          annotation_path = annotation_paths[i][j + val_images]
 
           mask, class_ids = self.extract_mask(image_path, annotation_path)
 
@@ -220,6 +224,8 @@ dataset_val.prepare()
 
 # configure model
 model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomConfig())
+
+exit(0)
 
 if len(sys.argv) > 2: # optionally load pre-trained weights
   model.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
