@@ -160,6 +160,8 @@ class CustomDataset(utils.Dataset):
   Returns a mask and a list of class ids
   '''
   def extract_mask(self, image_path, annotation_path):
+    print(image_path, annotation_path)
+
     class_ids = []
     f_ann = open(annotation_path,)
     annotation_json = json.load(f_ann)
@@ -181,6 +183,7 @@ class CustomDataset(utils.Dataset):
       # extract row and col data and crop image to annotation size
       col_min, col_max = int(min(a['points'][0][0], a['points'][1][0])), int(max(a['points'][0][0], a['points'][1][0]))
       row_min, row_max = int(min(a['points'][0][1], a['points'][1][1])), int(max(a['points'][0][1], a['points'][1][1]))
+      col_min, col_max, row_min, row_max = self.normalize_dimensions(col_min, col_max, row_min, row_max)
       cropped_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
       cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
       edged = cv2.Canny(cropped_img_gray, 30, 200)
@@ -225,6 +228,12 @@ class CustomDataset(utils.Dataset):
       'other': 'other'
     }
     return classes_dict.get(class_name)
+
+  '''
+  Ensures extracted row and column coords are not out of bounds
+  '''
+  def normalize_dimensions(self, col_min, col_max, row_min, row_max):
+      return max(col_min, 0), col_max, max(row_min, 0), row_max
 
 #######################################
 # Training
