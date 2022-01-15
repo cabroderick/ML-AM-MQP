@@ -160,17 +160,21 @@ class CustomDataset(utils.Dataset):
   Returns a mask and a list of class ids
   '''
   def extract_mask(self, image_path, annotation_path):
+    if not os.path.exists(annotation_path): # if the annotation path is not found, it is named differently than its source image
+        annotation_path = annotation_path[:-4] + '_20X_YZ.json'
+
     print(image_path, annotation_path)
 
-    class_ids = []
     f_ann = open(annotation_path,)
     annotation_json = json.load(f_ann)
-    image = cv2.imread(image_path)
-    height = image.shape[0]
-    width = image.shape[1]
 
     if not annotation_json['shapes']: # if there are no annotations to be extracted
         return None, None
+
+    class_ids = []
+    image = cv2.imread(image_path)
+    height = image.shape[0]
+    width = image.shape[1]
 
     annotation_list = []
     [annotation_list.append(shape) for shape in annotation_json['shapes'] if shape['shape_type'] =='rectangle'
