@@ -99,11 +99,13 @@ class CustomDataset(utils.Dataset):
 
           mask, class_ids = self.extract_mask(image_path, annotation_path)
 
-          self.add_image('dataset',
-                         image_id=image_id,
-                         path=image_path,
-                         mask=mask,
-                         class_ids=class_ids)
+          if mask != None: # skip images with no annotations
+              self.add_image('dataset',
+                             image_id=image_id,
+                             path=image_path,
+                             mask=mask,
+                             class_ids=class_ids)
+
       else:
         for j in range(train_images):
           image_id = image_ids[i][j + val_images]
@@ -112,11 +114,12 @@ class CustomDataset(utils.Dataset):
 
           mask, class_ids = self.extract_mask(image_path, annotation_path)
 
-          self.add_image('dataset',
-                         image_id=image_id,
-                         path=image_path,
-                         mask=mask,
-                         class_ids=class_ids)
+          if mask != None:
+              self.add_image('dataset',
+                             image_id=image_id,
+                             path=image_path,
+                             mask=mask,
+                             class_ids=class_ids)
 
     # val_images_counter = val_images # counter to keep track of remaining images for validation set
     #
