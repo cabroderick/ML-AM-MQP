@@ -36,10 +36,14 @@ config = CustomConfig()
 class CustomDataset(utils.Dataset):
 
   # define constants
-  BASE_IMAGES_DIR = './Data/Trial/' # directory where all images can be found
-  BASE_ANNOTATIONS_DIR = './Data/Trial/' # directory where all images labels can be found
-  IMAGES_DIRS = ['H6/', 'H8/', 'J7/'] # list of directories where images are contained
-  ANNOTATIONS_DIRS = ['Labeled H6/', 'Labeled H8/', 'Labeled J7/'] # corresponding list of directories where annotations are contained
+  BASE_IMAGES_DIR = '/home/cabroderick/Data/' # directory where all images can be found
+  BASE_ANNOTATIONS_DIR = '/home/cabroderick/Data/' # directory where all images labels can be found
+  IMAGES_DIRS = ['G0/', 'G9/', 'H0/', 'H4/', 'H5/', 'H6/', 'H8/', 'H9/', 'J0/', 'J1/', 'J3/', 'J4/', 'J7/',
+                 'J8/', 'K0/', 'Q0/', 'Q3/', 'Q5/', 'Q9/', 'R2/', 'R6/', 'R7/'] # list of directories where images are contained
+  ANNOTATIONS_DIRS = ['Labeled G0/', 'Labeled G9/', 'Labeled H0/', 'Labeled H4/', 'Labeled H5/', 'Labeled H6/',
+                      'Labeled H8/', 'Labeled H9/', 'Labeled J0/', 'Labeled J1/', 'Labeled J3/', 'Labeled J4/',
+                      'Labeled J7/', 'Labeled J8/', 'Labeled K0/', 'Labeled Q0/', 'Labeled Q3/', 'Labeled Q5/',
+                      'Labeled Q9/', 'Labeled R2/', 'Labeled R6/', 'Labeled R7/'] # corresponding list of directories where annotations are contained
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['gas entrapment porosity', 'lack of fusion porosity', 'keyhole porosity'] # all annotation classes
 
@@ -224,8 +228,6 @@ dataset_val.prepare()
 
 # configure model
 model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomConfig())
-
-exit(0)
 
 if len(sys.argv) > 2: # optionally load pre-trained weights
   model.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
