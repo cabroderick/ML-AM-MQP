@@ -36,16 +36,22 @@ config = CustomConfig()
 class CustomDataset(utils.Dataset):
 
   # define constants
-  BASE_IMAGES_DIR = '/home/cabroderick/Data/' # directory where all images can be found
-  BASE_ANNOTATIONS_DIR = '/home/cabroderick/Data/' # directory where all images labels can be found
+  BASE_IMAGES_DIR = '/home/cabroderick/Data/Images/' # directory where all images can be found
+  BASE_ANNOTATIONS_DIR = '/home/cabroderick/Data/Labels/' # directory where all images labels can be found
   IMAGES_DIRS = ['G0/', 'G9/', 'H0/', 'H4/', 'H5/', 'H6/', 'H8/', 'H9/', 'J0/', 'J1/', 'J3/', 'J4/', 'J7/',
                  'J8/', 'K0/', 'Q0/', 'Q3/', 'Q5/', 'Q9/', 'R2/', 'R6/', 'R7/'] # list of directories where images are contained
   ANNOTATIONS_DIRS = ['Labeled G0/', 'Labeled G9/', 'Labeled H0/', 'Labeled H4/', 'Labeled H5/', 'Labeled H6/',
                       'Labeled H8/', 'Labeled H9/', 'Labeled J0/', 'Labeled J1/', 'Labeled J3/', 'Labeled J4/',
                       'Labeled J7/', 'Labeled J8/', 'Labeled K0/', 'Labeled Q0/', 'Labeled Q3/', 'Labeled Q5/',
                       'Labeled Q9/', 'Labeled R2/', 'Labeled R6/', 'Labeled R7/'] # corresponding list of directories where annotations are contained
+
+  # BASE_IMAGES_DIR = './Data/Trial/'
+  # BASE_ANNOTATIONS_DIR = './Data/Trial/'
+  # IMAGES_DIRS = ['H6/']
+  # ANNOTATIONS_DIRS = ['Labeled H6/']
+
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
-  CLASSES = ['gas entrapment porosity', 'lack of fusion porosity', 'keyhole porosity'] # all annotation classes
+  CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other'] # all annotation classes
 
   '''
   Loads the dataset
@@ -161,12 +167,17 @@ class CustomDataset(utils.Dataset):
     height = image.shape[0]
     width = image.shape[1]
 
+    if not annotation_json['shapes']: # if there are no annotations to be extracted
+        return None, None
+
     annotation_list = []
-    [annotation_list.append(shape) for shape in annotation_json['shapes'] if shape['shape_type'] =='rectangle'] # get annotations in a list
+    [annotation_list.append(shape) for shape in annotation_json['shapes'] if shape['shape_type'] =='rectangle'
+     and self.normalize_classname(shape['label']) != 'gas entrapment porosity'] # get annotations in a list
     mask = np.zeros([height, width, len(annotation_list)], dtype='uint8') # initialize array of masks for each bounding box
 
     for i in range(len(annotation_list)):
       a = annotation_list[i]
+
       # extract row and col data and crop image to annotation size
       col_min, col_max = int(min(a['points'][0][0], a['points'][1][0])), int(max(a['points'][0][0], a['points'][1][0]))
       row_min, row_max = int(min(a['points'][0][1], a['points'][1][1])), int(max(a['points'][0][1], a['points'][1][1]))
@@ -204,11 +215,14 @@ class CustomDataset(utils.Dataset):
   def normalize_classname(self, class_name): # normalize the class name to one used by the model
     class_name = class_name.lower() # remove capitalization
     classes_dict = { # dictionary containing all class names used in labels and their appropriate model class name
-      'gas entrapment porosity' : 'gas entrapment porosity',
-      'keyhole porosity' : 'keyhole porosity',
-      'lack of fusion porosity' : 'lack of fusion porosity',
-      'fusion porosity' : 'lack of fusion porosity',
-      'gas porosity' : 'gas entrapment porosity'
+      'gas entrapment porosity': 'gas entrapment porosity',
+      'keyhole porosity': 'keyhole porosity',
+      'lack of fusion porosity': 'lack of fusion porosity',
+      'fusion porosity': 'lack of fusion porosity',
+      'gas porosity': 'gas entrapment porosity',
+      'lack-of-fusion': 'lack of fusion porosity',
+      'keyhole': ' keyhole porosity',
+      'other': 'other'
     }
     return classes_dict.get(class_name)
 
