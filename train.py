@@ -225,7 +225,7 @@ class CustomDataset(utils.Dataset):
       'fusion porosity': 'lack of fusion porosity',
       'gas porosity': 'gas entrapment porosity',
       'lack-of-fusion': 'lack of fusion porosity',
-      'keyhole': ' keyhole porosity',
+      'keyhole': 'keyhole porosity',
       'other': 'other',
     }
     return classes_dict.get(class_name)
