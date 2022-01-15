@@ -231,6 +231,7 @@ class CustomDataset(utils.Dataset):
       'lack-of-fusion': 'lack of fusion porosity',
       'keyhole': 'keyhole porosity',
       'other': 'other',
+      'lack of fusion': 'lack of fusion porosity'
     }
     return classes_dict.get(class_name)
 
