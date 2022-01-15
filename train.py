@@ -72,7 +72,7 @@ class CustomDataset(utils.Dataset):
         i_id = file[:-4]
         image_ids[i].append(i_id)
         image_paths[i].append(i_dir+i_id+'.tif')
-        annotation_paths[i].append(a_dir+i_id+'_20X_YZ.json')
+        annotation_paths[i].append(a_dir+i_id+'.json')
 
     if (len(image_paths) != len(annotation_paths)): # raise exception if mismatch betwaeen number of images and annotations
       raise(ValueError('Number of images and annotations must be equal'))
