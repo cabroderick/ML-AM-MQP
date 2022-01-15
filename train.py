@@ -161,7 +161,7 @@ class CustomDataset(utils.Dataset):
   '''
   def extract_mask(self, image_path, annotation_path):
     if not os.path.exists(annotation_path): # if the annotation path is not found, it is named differently than its source image
-        annotation_path = annotation_path[:-4] + '_20X_YZ.json'
+        annotation_path = annotation_path[:-5] + '_20X_YZ.json'
 
     print(image_path, annotation_path)
 
