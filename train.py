@@ -99,7 +99,7 @@ class CustomDataset(utils.Dataset):
 
           mask, class_ids = self.extract_mask(image_path, annotation_path)
 
-          if mask: # skip images with no annotations
+          if len(mask) != 0: # skip images with no annotations
               self.add_image('dataset',
                              image_id=image_id,
                              path=image_path,
@@ -114,7 +114,7 @@ class CustomDataset(utils.Dataset):
 
           mask, class_ids = self.extract_mask(image_path, annotation_path)
 
-          if mask:
+          if len(mask) != 0:
               self.add_image('dataset',
                              image_id=image_id,
                              path=image_path,
