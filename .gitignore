@@ -4,4 +4,7 @@
 *.xml
 *.name
 *.h5
-/.idea/.gitignore
+*.tif
+*.json
+/.idea/.gitignore/
+/.ipynb_checkpoints/
