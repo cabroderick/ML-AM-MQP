@@ -121,28 +121,6 @@ class CustomDataset(utils.Dataset):
                              mask=mask,
                              class_ids=class_ids)
 
-    # val_images_counter = val_images # counter to keep track of remaining images for validation set
-    #
-    # for i in range(total_images):
-    #   if validation and val_images_counter > 0:
-    #     val_images_counter -=1
-    #     continue
-    #   if (not validation) and val_images_counter < total_images:
-    #     val_images_counter += 1
-    #     continue
-    #
-    #   image_id = image_ids[i]
-    #   image_path = image_paths[i]
-    #   annotation_path = annotation_paths[i]
-    #
-    #   mask, class_ids = self.extract_mask(image_path, annotation_path)
-    #
-    #   self.add_image('dataset',
-    #                  image_id=image_id,
-    #                  path=image_path,
-    #                  mask=mask,
-    #                  class_ids=class_ids)
-
   '''
   Extracts a mask from an image
   image_id: The image id to extract the mask from

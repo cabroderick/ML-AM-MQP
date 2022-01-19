@@ -1,0 +1,199 @@
+Dataset: G0
+Total images: 89
+Total annotations: 89
+Number of annotation classes: 2
+Annotation occurrences:
+other: 92 occurrences
+lack of fusion porosity: 246 occurrences
+=========================================
+Dataset: G9
+Total images: 30
+Total annotations: 30
+Number of annotation classes: 3
+Annotation occurrences:
+lack of fusion porosity: 110 occurrences
+keyhole porosity: 25 occurrences
+other: 2 occurrences
+=========================================
+Dataset: H0
+Total images: 84
+Total annotations: 84
+Number of annotation classes: 3
+Annotation occurrences:
+lack of fusion porosity: 267 occurrences
+other: 208 occurrences
+keyhole porosity: 7 occurrences
+=========================================
+Dataset: H4
+Total images: 79
+Total annotations: 79
+Number of annotation classes: 3
+Annotation occurrences:
+lack of fusion porosity: 160 occurrences
+keyhole porosity: 5 occurrences
+other: 3 occurrences
+=========================================
+Dataset: H5
+Total images: 84
+Total annotations: 84
+Number of annotation classes: 2
+Annotation occurrences:
+gas entrapment porosity: 362 occurrences
+lack of fusion porosity: 372 occurrences
+=========================================
+Dataset: H6
+Total images: 104
+Total annotations: 104
+Number of annotation classes: 3
+Annotation occurrences:
+gas entrapment porosity: 730 occurrences
+lack of fusion porosity: 369 occurrences
+keyhole porosity: 86 occurrences
+=========================================
+Dataset: H8
+Total images: 80
+Total annotations: 80
+Number of annotation classes: 3
+Annotation occurrences:
+keyhole porosity: 41 occurrences
+lack of fusion porosity: 281 occurrences
+gas entrapment porosity: 839 occurrences
+=========================================
+Dataset: H9
+Total images: 84
+Total annotations: 84
+Number of annotation classes: 2
+Annotation occurrences:
+lack of fusion porosity: 274 occurrences
+gas entrapment porosity: 443 occurrences
+=========================================
+Dataset: J0
+Total images: 85
+Total annotations: 85
+Number of annotation classes: 3
+Annotation occurrences:
+other: 10 occurrences
+lack of fusion porosity: 47 occurrences
+keyhole porosity: 20 occurrences
+=========================================
+Dataset: J1
+Total images: 84
+Total annotations: 84
+Number of annotation classes: 3
+Annotation occurrences:
+other: 137 occurrences
+lack of fusion porosity: 25 occurrences
+keyhole porosity: 5 occurrences
+=========================================
+Dataset: J3
+Total images: 84
+Total annotations: 84
+Number of annotation classes: 3
+Annotation occurrences:
+other: 59 occurrences
+lack of fusion porosity: 65 occurrences
+keyhole porosity: 9 occurrences
+=========================================
+Dataset: J4
+Total images: 85
+Total annotations: 85
+Number of annotation classes: 3
+Annotation occurrences:
+other: 85 occurrences
+keyhole porosity: 58 occurrences
+lack of fusion porosity: 42 occurrences
+=========================================
+Dataset: J7
+Total images: 85
+Total annotations: 85
+Number of annotation classes: 3
+Annotation occurrences:
+lack of fusion porosity: 308 occurrences
+gas entrapment porosity: 355 occurrences
+keyhole porosity: 31 occurrences
+=========================================
+Dataset: J8
+Total images: 85
+Total annotations: 85
+Number of annotation classes: 3
+Annotation occurrences:
+lack of fusion porosity: 38 occurrences
+keyhole porosity: 12 occurrences
+other: 20 occurrences
+=========================================
+Dataset: K0
+Total images: 85
+Total annotations: 85
+Number of annotation classes: 2
+Annotation occurrences:
+gas entrapment porosity: 287 occurrences
+lack of fusion porosity: 363 occurrences
+=========================================
+Dataset: Q0
+Total images: 84
+Total annotations: 84
+Number of annotation classes: 3
+Annotation occurrences:
+other: 59 occurrences
+lack of fusion porosity: 202 occurrences
+keyhole porosity: 7 occurrences
+=========================================
+Dataset: Q3
+Total images: 84
+Total annotations: 84
+Number of annotation classes: 3
+Annotation occurrences:
+other: 83 occurrences
+lack of fusion porosity: 32 occurrences
+keyhole porosity: 5 occurrences
+=========================================
+Dataset: Q5
+Total images: 83
+Total annotations: 83
+Number of annotation classes: 3
+Annotation occurrences:
+lack of fusion porosity: 22 occurrences
+keyhole porosity: 4 occurrences
+other: 3 occurrences
+=========================================
+Dataset: Q9
+Total images: 85
+Total annotations: 85
+Number of annotation classes: 3
+Annotation occurrences:
+lack of fusion porosity: 106 occurrences
+keyhole porosity: 3 occurrences
+other: 10 occurrences
+=========================================
+Dataset: R2
+Total images: 69
+Total annotations: 69
+Number of annotation classes: 3
+Annotation occurrences:
+lack of fusion porosity: 173 occurrences
+keyhole porosity: 7 occurrences
+other: 7 occurrences
+=========================================
+Dataset: R6
+Total images: 84
+Total annotations: 84
+Number of annotation classes: 3
+Annotation occurrences:
+other: 77 occurrences
+keyhole porosity: 101 occurrences
+lack of fusion porosity: 35 occurrences
+=========================================
+Dataset: R7
+Total images: 85
+Total annotations: 85
+Number of annotation classes: 3
+Annotation occurrences:
+other: 73 occurrences
+lack of fusion porosity: 43 occurrences
+keyhole porosity: 5 occurrences
+=========================================
+Total annotation occurrences:
+other: 928 occurrences
+lack of fusion porosity: 3580 occurrences
+keyhole porosity: 431 occurrences
+gas entrapment porosity: 3016 occurrences
