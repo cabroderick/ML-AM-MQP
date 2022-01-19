@@ -27,7 +27,6 @@ for i in range(len(IMAGES_DIRS)):
     annotation_dir = BASE_ANNOTATIONS_DIR + ANNOTATIONS_DIRS[i]
     print('Dataset: ' + IMAGES_DIRS[i][:-1])
     print('Total images: ' + str(len(os.listdir(image_dir))))
-    print('Total annotations: ' + str(len(os.listdir(annotation_dir))))
 
     classes = {} # dictionary containing the classes for a particular dataset
 

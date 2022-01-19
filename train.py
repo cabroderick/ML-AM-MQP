@@ -11,6 +11,7 @@ import cv2
 from mrcnn import utils
 from mrcnn.config import Config
 from mrcnn.model import MaskRCNN
+from normalize_classnames import normalize_classname
 
 if len(sys.argv) < 2: # ensure model name is included in arguments
   sys.exit('Insufficient arguments')
@@ -159,7 +160,7 @@ class CustomDataset(utils.Dataset):
 
     annotation_list = []
     [annotation_list.append(shape) for shape in annotation_json['shapes'] if shape['shape_type'] =='rectangle'
-     and self.normalize_classname(shape['label']) != 'gas entrapment porosity'] # get annotations in a list
+     and normalize_classname(shape['label']) != 'gas entrapment porosity'] # get annotations in a list
     mask = np.zeros([height, width, len(annotation_list)], dtype='uint8') # initialize array of masks for each bounding box
 
     for i in range(len(annotation_list)):
@@ -194,27 +195,11 @@ class CustomDataset(utils.Dataset):
       # cv2.waitKey(0)
 
       # extract class id and append to list
-      class_label = self.normalize_classname(a['label'])
+      class_label = normalize_classname(a['label'])
       class_id = self.CLASSES.index(class_label)
       class_ids.append(class_id)
 
     return mask.astype(np.bool), np.array(class_ids, dtype=np.int32)
-
-  def normalize_classname(self, class_name): # normalize the class name to one used by the model
-    class_name = class_name.lower() # remove capitalization
-    class_name = class_name.strip() # remove leading and trailing whitespace
-    classes_dict = { # dictionary containing all class names used in labels and their appropriate model class name
-      'gas entrapment porosity': 'gas entrapment porosity',
-      'keyhole porosity': 'keyhole porosity',
-      'lack of fusion porosity': 'lack of fusion porosity',
-      'fusion porosity': 'lack of fusion porosity',
-      'gas porosity': 'gas entrapment porosity',
-      'lack-of-fusion': 'lack of fusion porosity',
-      'keyhole': 'keyhole porosity',
-      'other': 'other',
-      'lack of fusion': 'lack of fusion porosity'
-    }
-    return classes_dict.get(class_name)
 
   '''
   Ensures extracted row and column coords are not out of bounds
