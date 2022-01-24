@@ -11,7 +11,7 @@ import cv2
 from mrcnn import utils
 from mrcnn.config import Config
 from mrcnn.model import MaskRCNN
-from normalize_classnames import normalize_classname
+from utils.normalize_classnames import normalize_classname
 
 if len(sys.argv) < 2: # ensure model name is included in arguments
   sys.exit('Insufficient arguments')
