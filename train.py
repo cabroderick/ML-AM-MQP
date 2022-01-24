@@ -39,6 +39,7 @@ class CustomDataset(utils.Dataset):
   # define constants
   BASE_IMAGES_DIR = '/home/cabroderick/Data/Images/' # directory where all images can be found
   BASE_ANNOTATIONS_DIR = '/home/cabroderick/Data/Labels/' # directory where all images labels can be found
+  VALIDATION_PATH = 'validation.txt' # path to file containing validation images to skip during training
   IMAGES_DIRS = ['G0', 'G9', 'H0', 'H4', 'H5', 'H6', 'H8', 'H9', 'J0', 'J1', 'J3', 'J4', 'J7', 'J8', 'K0', 'Q0', 'Q3',
                  'Q5', 'Q9', 'R2', 'R6', 'R7'] # list of image dirs to train on
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
@@ -49,6 +50,10 @@ class CustomDataset(utils.Dataset):
   validation: Indicates whether the current set is the validation set
   '''
   def load_dataset(self, validation=False):
+    f = open(self.VALIDATION_PATH, 'r+')
+    val_images = [line.strip() for line in f.readlines()]
+    f.close()
+
     image_paths = []
     annotation_paths = []
     image_ids = []
@@ -61,6 +66,8 @@ class CustomDataset(utils.Dataset):
       a_dir = self.BASE_ANNOTATIONS_DIR + 'Labeled ' + self.IMAGES_DIRS[i] + '/'
       for file in os.listdir(i_dir):
         i_id = file[:-4]
+        if i_id+'.tif' in val_images: # skip validation images
+            continue
         image_ids[i].append(i_id)
         image_paths[i].append(i_dir+i_id+'.tif')
         annotation_paths[i].append(a_dir+i_id+'.json')
