@@ -39,18 +39,8 @@ class CustomDataset(utils.Dataset):
   # define constants
   BASE_IMAGES_DIR = '/home/cabroderick/Data/Images/' # directory where all images can be found
   BASE_ANNOTATIONS_DIR = '/home/cabroderick/Data/Labels/' # directory where all images labels can be found
-  IMAGES_DIRS = ['G0/', 'G9/', 'H0/', 'H4/', 'H5/', 'H6/', 'H8/', 'H9/', 'J0/', 'J1/', 'J3/', 'J4/', 'J7/',
-                 'J8/', 'K0/', 'Q0/', 'Q3/', 'Q5/', 'Q9/', 'R2/', 'R6/', 'R7/'] # list of directories where images are contained
-  ANNOTATIONS_DIRS = ['Labeled G0/', 'Labeled G9/', 'Labeled H0/', 'Labeled H4/', 'Labeled H5/', 'Labeled H6/',
-                      'Labeled H8/', 'Labeled H9/', 'Labeled J0/', 'Labeled J1/', 'Labeled J3/', 'Labeled J4/',
-                      'Labeled J7/', 'Labeled J8/', 'Labeled K0/', 'Labeled Q0/', 'Labeled Q3/', 'Labeled Q5/',
-                      'Labeled Q9/', 'Labeled R2/', 'Labeled R6/', 'Labeled R7/'] # corresponding list of directories where annotations are contained
-
-  # BASE_IMAGES_DIR = './Data/Trial/'
-  # BASE_ANNOTATIONS_DIR = './Data/Trial/'
-  # IMAGES_DIRS = ['H6/']
-  # ANNOTATIONS_DIRS = ['Labeled H6/']
-
+  IMAGES_DIRS = ['G0', 'G9', 'H0', 'H4', 'H5', 'H6', 'H8', 'H9', 'J0', 'J1', 'J3', 'J4', 'J7', 'J8', 'K0', 'Q0', 'Q3',
+                 'Q5', 'Q9', 'R2', 'R6', 'R7'] # list of image dirs to train on
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other'] # all annotation classes
 
@@ -67,8 +57,8 @@ class CustomDataset(utils.Dataset):
       image_paths.append([])
       annotation_paths.append([])
       image_ids.append([])
-      i_dir = self.BASE_IMAGES_DIR + self.IMAGES_DIRS[i]
-      a_dir = self.BASE_ANNOTATIONS_DIR + self.ANNOTATIONS_DIRS[i]
+      i_dir = self.BASE_IMAGES_DIR + self.IMAGES_DIRS[i] + '/'
+      a_dir = self.BASE_ANNOTATIONS_DIR + 'Labeled ' + self.IMAGES_DIRS[i] + '/'
       for file in os.listdir(i_dir):
         i_id = file[:-4]
         image_ids[i].append(i_id)
@@ -77,11 +67,6 @@ class CustomDataset(utils.Dataset):
 
     if (len(image_paths) != len(annotation_paths)): # raise exception if mismatch betwaeen number of images and annotations
       raise(ValueError('Number of images and annotations must be equal'))
-
-    # total_images = len(image_paths) # count of all images to be processed
-    # total_images_path = int(total_images / len(self.IMAGES_DIRS)) # count of images per subdirectory
-    # val_images = (int) (total_images * (1-self.TRAIN_TEST_SPLIT)) # the total number of images in the validation set
-    # val_images_path = int(val_images / len(self.IMAGES_DIRS)) # number of validation images per subdirectory
 
     # configure dataset
     for i in range(len(self.CLASSES)):
