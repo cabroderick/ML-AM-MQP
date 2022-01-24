@@ -6,5 +6,5 @@
 *.h5
 *.tif
 *.json
-/.idea/.gitignore/
+/.idea/.gitignore
 /.ipynb_checkpoints/
