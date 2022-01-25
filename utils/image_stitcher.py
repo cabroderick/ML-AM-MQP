@@ -1,12 +1,13 @@
 from PIL import Image, ImageDraw
 import os
 import json
+from shapely.geometry import Polygon
 
 # list of directories where images are contained
 IMAGES_DIRS = ['G0/', 'G9/', 'H0/', 'H4/', 'H5/', 'H6/', 'H8/', 'H9/', 'J0/', 'J1/', 'J3/', 'J4/', 'J7/',
                'J8/', 'K0/', 'Q0/', 'Q3/', 'Q5/', 'Q9/', 'R2/', 'R6/', 'R7/']
-IMAGE_ROOT = "./Images/"
-LABELS_ROOT = "./Labels/"
+IMAGE_ROOT = "../Images/"
+LABELS_ROOT = "../Labels/"
 X = 1280
 Y = 1024
 
@@ -62,7 +63,7 @@ def overlap_area(bb1, bb2):
 def stitch_all():
     for set in IMAGES_DIRS:
         annotations = {}
-        annotations['shapes'] = []
+        annotations['shapes'] = {}
 
         all_files = os.listdir(IMAGE_ROOT + set)
         x_y = [(int(x.split("_")[1].split(".")[0][0]), int(x.split("_")[1].split(".")[0][1:])) for x in all_files]
@@ -72,10 +73,13 @@ def stitch_all():
         image = Image.new('RGB', (X * x_dim, Y * y_dim))
 
         for filename in os.listdir(IMAGE_ROOT + set):
+            print(filename)
             img_path = IMAGE_ROOT + set + filename
             coordinates = filename.split("_")
             row = int(coordinates[1].split(".")[0][0])
             col = int(coordinates[1].split(".")[0][1:])
+
+            annotations["shapes"][str(row)+"_"+str(col)] = []
 
             im = Image.open(img_path)
             x_shift = (col - 1) * X
@@ -100,14 +104,23 @@ def stitch_all():
                 shape = label["points"]
                 new_points = [[x_shift + p[0], y_shift + p[1]] for p in shape]
                 new_label["points"] = new_points
+                if label["shape_type"] == "rectangle":
+                    min_x, min_y = min(new_points)
+                    max_x, max_y = max(new_points)
+                    new_points_ordered = []
+                    new_points_ordered.append([min_x, min_y])
+                    new_points_ordered.append([min_x, max_y])
+                    new_points_ordered.append([max_x, max_y])
+                    new_points_ordered.append([max_x, min_y])
+                    new_label["points"] = new_points_ordered
+                    new_label["shape_type"] = "polygon"
 
-                annotations["shapes"].append(new_label)
+                annotations["shapes"][str(row)+"_"+str(col)].append(new_label)
         image2 = image.copy()
-        image.save("Stitched/" + set[:-1] + ".png")
+        image.save("../Stitched/" + set[:-1] + ".png")
 
         img_annotated = ImageDraw.Draw(image)
-
-        for defect in annotations["shapes"]:
+        for defect in annotations["shapes"][str(row)+"_"+str(col)]:
             if defect["shape_type"] == "rectangle":
                 xy = [(defect["points"][0][0], defect["points"][0][1]),
                       (defect["points"][1][0], defect["points"][1][1])]
@@ -115,37 +128,54 @@ def stitch_all():
             if defect["shape_type"] == "polygon":
                 xy = [tuple(x) for x in defect["points"]]
                 img_annotated.polygon(xy, fill=None, outline=color_dict[defect["label"]], width=5)
-        image.save("Stitched/" + set[:-1] + "_annotated.png")
+        image.save("../Stitched/" + set[:-1] + "_annotated.png")
 
-        # annotations_list = [(instance['label'], instance['points']) for instance in annotations['shapes']]
-        # merged_annotations = []
-        # merged_list = []
-        # for idx, bb in enumerate(annotations_list):
-        #     if idx in merged_list:
-        #         continue
-        #     merged = False
-        #     for idx2, bb2 in enumerate(annotations_list, idx+1):
-        #         if bb[0] == bb2[0]: #if the label is the same
-        #             if overlap_area(bb[1], bb2[1]) > 0:
-        #                 #they overlap
-        #                 p1 = [bb[1][0], bb[1][1], [bb[1][0][0],bb[1][1][1]], [bb[1][1][0],bb[1][0][1]]]
-        #                 p2 = [bb2[1][0], bb2[1][1], [bb2[1][0][0],bb2[1][1][1]], [bb2[1][1][0],bb2[1][0][1]]]
-        #                 merged_annotations.append((bb[0], get_max_bb(p1+p2)))
-        #                 print((bb[0], get_max_bb(p1+p2)))
-        #                 merged = True
-        #                 merged_list.append(idx2)
-        #
-        #         if merged:
-        #             break
-        #     if not merged:
-        #         merged_annotations.append(bb)
-        #
-        # img_annotated2 = ImageDraw.Draw(image2)
-        # for defect in merged_annotations:
-        #     xy = [(defect[1][0][0], defect[1][0][1]), (defect[1][1][0], defect[1][1][1])]
-        #     img_annotated2.rectangle(xy, fill=None, outline=color_dict[defect[0]], width=5)
-        # image2.save("Stitched/" + set[:-1] + "_annotated_merged.png")
 
+        merged_annotations = {}
+        merged_annotations["shapes"] = []
+        already_merged = []
+        merged_instances = []
+        for section in annotations["shapes"]:
+            row, col = section.split("_")
+            all_neighbors = [[int(row)+1, int(col)], [int(row)-1, int(col)], [int(row), int(col)-1], [int(row),
+                                                                                                      int(col)+1]]
+            for n in all_neighbors:
+                if n not in already_merged and str(n[0])+"_"+str(n[1]) in annotations["shapes"].keys():
+                    for instance in annotations["shapes"][section]:
+                        if instance not in merged_instances:
+                            merged = False
+                            polygon1 = Polygon(instance["points"])
+                            for shape in annotations["shapes"][str(n[0])+"_"+str(n[1])]:
+                                if shape["label"] == instance["label"]:
+                                    polygon2 = Polygon(shape["points"])
+                                    if polygon1.intersects(polygon2):
+                                        #combine together
+                                        new_polygon = polygon1.union(polygon2)
+                                        new_label = {}
+                                        new_label["group_id"] = None
+                                        new_label["flags"] = []
+                                        new_label["shape_type"] = "polygon"
+                                        new_label['label'] = normalize_classname(instance['label'])
+                                        new_label["points"] = list(zip(*new_polygon.exterior.coords.xy))
+                                        # print("+++++++++++++++++++++++++++++++")
+                                        # print(list(zip(*polygon1.exterior.coords.xy)))
+                                        # print(list(zip(*polygon2.exterior.coords.xy)))
+                                        # print(list(zip(*new_polygon.exterior.coords.xy)))
+                                        merged_annotations["shapes"].append(new_label)
+                                        merged_instances.append(shape)
+                                        break #should not merge with more than 1 from different set
+                            if not merged:
+                                merged_annotations["shapes"].append(instance)
+            already_merged.append(section)
+
+        img_annotated2 = ImageDraw.Draw(image2)
+        for defect in merged_annotations["shapes"]:
+            xy = [tuple(x) for x in defect["points"]]
+            img_annotated2.polygon(xy, fill=None, outline=color_dict[defect["label"]], width=5)
+        image2.save("../Stitched/" + set[:-1] + "_annotated_merged.png")
+        with open("../Stitched/"+set[:-1] + '_merged.json', 'w') as outfile:
+            json.dump(merged_annotations, outfile)
+        break
 
 def stitch_set(set, merge_way_raw, folder_name):
     naming_scheme = os.listdir(IMAGE_ROOT + set)[0].split("_")
@@ -221,7 +251,7 @@ def stitch_set(set, merge_way_raw, folder_name):
                 if merged:
                     break
 
-        image.save(folder_name + "/" + str(min_col) + str(min_row) + "_merged.png")
+        image.save("../"+folder_name + "/" + str(min_col) + str(min_row) + "_merged.png")
 
         img_annotated = ImageDraw.Draw(image)
 
@@ -235,9 +265,8 @@ def stitch_set(set, merge_way_raw, folder_name):
                 img_annotated.polygon(xy, fill=None, outline=color_dict[defect["label"]], width=5)
         image.save(folder_name + "/" + str(min_col) + str(min_row)+ "_annotated.png")
 
-
-        with open(folder_name + "/" + str(min_col) + str(min_row)+ '_merged.json', 'w') as outfile:
-            json.dump(json.dumps(merged_annotations), outfile)
+        with open("../"+folder_name + "/" + str(min_col) + str(min_row)+ '_merged.json', 'w') as outfile:
+            json.dump(merged_annotations, outfile)
 
 
 G0merge = [["12", "21", "22"], ["31", "32", "41", "42"], ["51", "52"], ["13", "14", "23", "24"], ["33", "34", "43",
@@ -248,3 +277,4 @@ G0merge = [["12", "21", "22"], ["31", "32", "41", "42"], ["51", "52"], ["13", "1
            "416"],["515", "516"], ["117", "118", "217", "218"], ["317", "318", "417", "418"], ["517", "518"]]
 
 #stitch_set("G0/", G0merge, "G0 2x2 merge")
+stitch_all()
