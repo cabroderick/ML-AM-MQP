@@ -121,10 +121,6 @@ def stitch_all():
 
         img_annotated = ImageDraw.Draw(image)
         for defect in annotations["shapes"][str(row)+"_"+str(col)]:
-            if defect["shape_type"] == "rectangle":
-                xy = [(defect["points"][0][0], defect["points"][0][1]),
-                      (defect["points"][1][0], defect["points"][1][1])]
-                img_annotated.rectangle(xy, fill=None, outline=color_dict[defect["label"]], width=5)
             if defect["shape_type"] == "polygon":
                 xy = [tuple(x) for x in defect["points"]]
                 img_annotated.polygon(xy, fill=None, outline=color_dict[defect["label"]], width=5)
@@ -141,32 +137,40 @@ def stitch_all():
                                                                                                       int(col)+1]]
             for n in all_neighbors:
                 if n not in already_merged and str(n[0])+"_"+str(n[1]) in annotations["shapes"].keys():
+                    polygon1_shift = [n[0]-int(row), n[1]-int(col)]
+
                     for instance in annotations["shapes"][section]:
+                        polygon2_shift = [int(row)-n[0], int(col)-n[1]]
                         if instance not in merged_instances:
                             merged = False
                             polygon1 = Polygon(instance["points"])
+                            shifted_polygon1_points = [[vertex[0]+polygon1_shift[0]*2, vertex[1]+2*polygon1_shift[1]]
+                                                      for vertex in instance["points"]]
+                            shifted_polygon1 = Polygon(shifted_polygon1_points)
+
                             for shape in annotations["shapes"][str(n[0])+"_"+str(n[1])]:
                                 if shape["label"] == instance["label"]:
                                     polygon2 = Polygon(shape["points"])
-                                    if polygon1.intersects(polygon2):
+                                    shifted_polygon2_points = [[vertex[0]+polygon2_shift[0]*2,
+                                                                vertex[1]+polygon2_shift[1]*2]
+                                                               for vertex in shape["points"]]
+                                    shifted_polygon2 = Polygon(shifted_polygon2_points)
+                                    if shifted_polygon1.intersects(shifted_polygon2):
                                         #combine together
-                                        new_polygon = polygon1.union(polygon2)
+                                        new_polygon = shifted_polygon1.union(shifted_polygon2)
                                         new_label = {}
                                         new_label["group_id"] = None
                                         new_label["flags"] = []
                                         new_label["shape_type"] = "polygon"
-                                        new_label['label'] = normalize_classname(instance['label'])
+                                        new_label["label"] = normalize_classname(instance["label"])
                                         new_label["points"] = list(zip(*new_polygon.exterior.coords.xy))
-                                        # print("+++++++++++++++++++++++++++++++")
-                                        # print(list(zip(*polygon1.exterior.coords.xy)))
-                                        # print(list(zip(*polygon2.exterior.coords.xy)))
-                                        # print(list(zip(*new_polygon.exterior.coords.xy)))
                                         merged_annotations["shapes"].append(new_label)
                                         merged_instances.append(shape)
+                                        merged = True
                                         break #should not merge with more than 1 from different set
                             if not merged:
                                 merged_annotations["shapes"].append(instance)
-            already_merged.append(section)
+            already_merged.append([int(row), int(col)])
 
         img_annotated2 = ImageDraw.Draw(image2)
         for defect in merged_annotations["shapes"]:
