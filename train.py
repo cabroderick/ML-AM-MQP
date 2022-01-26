@@ -14,7 +14,7 @@ if len(sys.argv) < 2: # ensure model name is included in arguments
 ######################################
 # Configuration
 ######################################
-class CustomConfig(Config):
+class TrainConfig(Config):
     NAME = "custom_mcrnn"
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
@@ -24,7 +24,7 @@ class CustomConfig(Config):
     LEARNING_RATE = .001
     BATCH_SIZE = 1
 
-config = CustomConfig()
+config = TrainConfig()
 
 #######################################
 # Training
@@ -41,7 +41,7 @@ dataset_val.load_dataset(validation=True)
 dataset_val.prepare()
 
 # configure model
-model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=CustomConfig())
+model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=TrainConfig())
 
 if len(sys.argv) > 2: # optionally load pre-trained weights
   model.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])

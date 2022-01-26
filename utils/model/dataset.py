@@ -7,12 +7,11 @@ from normalize_classname import normalize_classname
 
 class Model_Dataset(utils.Dataset):
 
-  # define constants, overwrite as needed
+  # model constants, override as needed
   BASE_IMAGES_DIR = '/home/cabroderick/Data/Images/' # directory where all images can be found
   BASE_ANNOTATIONS_DIR = '/home/cabroderick/Data/Labels/' # directory where all images labels can be found
   # VALIDATION_PATH = 'validation.txt' # path to file containing validation images to skip during training
-  IMAGES_DIRS = ['G0', 'G9', 'H0', 'H4', 'H5', 'H6', 'H8', 'H9', 'J0', 'J1', 'J3', 'J4', 'J7', 'J8', 'K0', 'Q0', 'Q3',
-                 'Q5', 'Q9', 'R2', 'R6', 'R7'] # list of image dirs to train on
+  IMAGES_DIRS = [] # list of image dirs to train on
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other'] # all annotation classes
 
