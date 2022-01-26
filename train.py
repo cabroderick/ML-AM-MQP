@@ -6,7 +6,7 @@ Usage: python train.py [model name] [optional pre-trained weights file path]
 import sys
 from mrcnn.config import Config
 from mrcnn.model import MaskRCNN
-from utils.model.dataset import Model_Dataset
+from utils.dataset import Model_Dataset
 
 if len(sys.argv) < 2: # ensure model name is included in arguments
   sys.exit('Insufficient arguments')

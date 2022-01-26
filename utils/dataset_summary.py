@@ -1,6 +1,6 @@
 import json
 import os
-from utils.model.normalize_classname import normalize_classname
+from utils.normalize_classname import normalize_classname
 import csv
 
 csv_rows = ['Dataset', '# of images', 'lack of fusion porosity', 'gas entrapment porosity', 'keyhole porosity', 'other', 'total annotation instances']
