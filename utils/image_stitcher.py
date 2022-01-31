@@ -71,6 +71,7 @@ def stitch_all():
         y_dim = max(x_y)[0]
 
         image = Image.new('RGB', (X * x_dim, Y * y_dim))
+        image_borders = Image.new('RGB', (X * x_dim, Y * y_dim))
 
         for filename in os.listdir(IMAGE_ROOT + set):
             print(filename)
@@ -79,12 +80,15 @@ def stitch_all():
             row = int(coordinates[1].split(".")[0][0])
             col = int(coordinates[1].split(".")[0][1:])
 
-            annotations["shapes"][str(row)+"_"+str(col)] = []
+            annotations["shapes"][str(row) + "_" + str(col)] = []
 
             im = Image.open(img_path)
             x_shift = (col - 1) * X
             y_shift = (row - 1) * Y
             image.paste(im, (x_shift, y_shift))
+
+            image_borders.paste(im, (x_shift, y_shift))
+            pixels = image_borders.load()
 
             labels_file_path = LABELS_ROOT + "Labeled " + set + filename[:-4] + ".json"
             if os.path.exists(labels_file_path):
@@ -115,49 +119,52 @@ def stitch_all():
                     new_label["points"] = new_points_ordered
                     new_label["shape_type"] = "polygon"
 
-                annotations["shapes"][str(row)+"_"+str(col)].append(new_label)
-        image2 = image.copy()
+                annotations["shapes"][str(row) + "_" + str(col)].append(new_label)
+
+        image2 = image_borders.copy()
         image.save("../Stitched/" + set[:-1] + ".png")
 
-        img_annotated = ImageDraw.Draw(image)
-        for defect in annotations["shapes"][str(row)+"_"+str(col)]:
-            if defect["shape_type"] == "polygon":
-                xy = [tuple(x) for x in defect["points"]]
-                img_annotated.polygon(xy, fill=None, outline=color_dict[defect["label"]], width=5)
-        image.save("../Stitched/" + set[:-1] + "_annotated.png")
+        img_annotated = ImageDraw.Draw(image_borders)
+        for x in range(0, x_dim):
+            img_annotated.line((X*x, 0, X*x, Y*Y), fill=0)
+        for y in range(0, y_dim):
+            img_annotated.line((0, Y*y, X*X, Y*y), fill=0)
 
+        #image_borders.save("../Stitched/" + set[:-1] + "_annotated.png")
 
-        merged_annotations = {}
-        merged_annotations["shapes"] = []
+        merged_annotations = {"shapes": []}
         already_merged = []
         merged_instances = []
         for section in annotations["shapes"]:
             row, col = section.split("_")
-            all_neighbors = [[int(row)+1, int(col)], [int(row)-1, int(col)], [int(row), int(col)-1], [int(row),
-                                                                                                      int(col)+1]]
-            for n in all_neighbors:
-                if n not in already_merged and str(n[0])+"_"+str(n[1]) in annotations["shapes"].keys():
-                    polygon1_shift = [n[0]-int(row), n[1]-int(col)]
+            all_neighbors = [[int(row) + 1, int(col)], [int(row) - 1, int(col)], [int(row), int(col) - 1],
+                             [int(row), int(col) + 1]]
 
-                    for instance in annotations["shapes"][section]:
-                        polygon2_shift = [int(row)-n[0], int(col)-n[1]]
-                        if instance not in merged_instances:
-                            merged = False
+            for instance in annotations["shapes"][section]:
+                merged = False
+                for n in all_neighbors:
+                    if merged:
+                        break
+                    if n not in already_merged and str(n[0]) + "_" + str(n[1]) in annotations["shapes"].keys():
+                        print(n)
+                        polygon1_shift = [n[0] - int(row), n[1] - int(col)]
+                        polygon2_shift = [int(row) - n[0], int(col) - n[1]]
+                        if not merged and instance["points"] not in merged_instances:
                             polygon1 = Polygon(instance["points"])
-                            shifted_polygon1_points = [[vertex[0]+polygon1_shift[0]*2, vertex[1]+2*polygon1_shift[1]]
-                                                      for vertex in instance["points"]]
-                            shifted_polygon1 = Polygon(shifted_polygon1_points)
+                            # shifted_polygon1_points = [[vertex[0]+polygon1_shift[0]*2, vertex[1]+2*polygon1_shift[1]]
+                            #                          for vertex in instance["points"]]
+                            # shifted_polygon1 = Polygon(shifted_polygon1_points)
 
-                            for shape in annotations["shapes"][str(n[0])+"_"+str(n[1])]:
-                                if shape["label"] == instance["label"]:
+                            for shape in annotations["shapes"][str(n[0]) + "_" + str(n[1])]:
+                                if shape["label"] == instance["label"] and shape["points"] not in merged_instances:
                                     polygon2 = Polygon(shape["points"])
-                                    shifted_polygon2_points = [[vertex[0]+polygon2_shift[0]*2,
-                                                                vertex[1]+polygon2_shift[1]*2]
-                                                               for vertex in shape["points"]]
-                                    shifted_polygon2 = Polygon(shifted_polygon2_points)
-                                    if shifted_polygon1.intersects(shifted_polygon2):
-                                        #combine together
-                                        new_polygon = shifted_polygon1.union(shifted_polygon2)
+                                    # shifted_polygon2_points = [[vertex[0]+polygon2_shift[0]*2,
+                                    #                            vertex[1]+polygon2_shift[1]*2]
+                                    #                           for vertex in shape["points"]]
+                                    # shifted_polygon2 = Polygon(shifted_polygon2_points)
+                                    if polygon1.intersects(polygon2):
+                                        # combine together
+                                        new_polygon = polygon1.union(polygon2)
                                         new_label = {}
                                         new_label["group_id"] = None
                                         new_label["flags"] = []
@@ -165,21 +172,27 @@ def stitch_all():
                                         new_label["label"] = normalize_classname(instance["label"])
                                         new_label["points"] = list(zip(*new_polygon.exterior.coords.xy))
                                         merged_annotations["shapes"].append(new_label)
-                                        merged_instances.append(shape)
+                                        merged_instances.append(shape["points"])
+                                        merged_instances.append(instance["points"])
+                                        # print("MERGED")
+                                        # print(list(zip(*polygon1.exterior.coords.xy)))
+                                        # print(list(zip(*polygon2.exterior.coords.xy)))
+                                        # print(list(zip(*new_polygon.exterior.coords.xy)))
                                         merged = True
-                                        break #should not merge with more than 1 from different set
-                            if not merged:
-                                merged_annotations["shapes"].append(instance)
+                                        break  # should not merge with more than 1 from different set
+                if not merged and instance["points"] not in merged_instances:
+                # print("not merged")
+                # print(instance["points"])
+                    merged_annotations["shapes"].append(instance)
             already_merged.append([int(row), int(col)])
 
-        img_annotated2 = ImageDraw.Draw(image2)
+        img_annotated2 = ImageDraw.Draw(image_borders)
         for defect in merged_annotations["shapes"]:
             xy = [tuple(x) for x in defect["points"]]
-            img_annotated2.polygon(xy, fill=None, outline=color_dict[defect["label"]], width=5)
-        image2.save("../Stitched/" + set[:-1] + "_annotated_merged.png")
-        with open("../Stitched/"+set[:-1] + '_merged.json', 'w') as outfile:
+            img_annotated2.polygon(xy, fill=None, outline=color_dict[defect["label"]], width=1)
+        image_borders.save("../Stitched/" + set[:-1] + "_annotated_merged.png")
+        with open("../Stitched/" + set[:-1] + '_merged.json', 'w') as outfile:
             json.dump(merged_annotations, outfile)
-        break
 
 def stitch_set(set, merge_way_raw, folder_name):
     naming_scheme = os.listdir(IMAGE_ROOT + set)[0].split("_")
@@ -233,13 +246,13 @@ def stitch_set(set, merge_way_raw, folder_name):
 
                 annotations["shapes"].append(new_label)
 
-        merged_annotations ={}
+        merged_annotations = {}
         merged_annotations["shapes"] = []
 
         for idx, bb in enumerate(annotations['shapes']):
             merged = False
-            for idx2, bb2 in enumerate(annotations['shapes'], idx+1):
-                if bb["label"] == bb2["label"]: #if the label is the same
+            for idx2, bb2 in enumerate(annotations['shapes'], idx + 1):
+                if bb["label"] == bb2["label"]:  # if the label is the same
                     if overlap_area(bb["points"], bb2["points"]) > 0:
                         p1 = [bb["points"][0], bb["points"][1]]
                         p2 = [bb2["points"][0], bb2["points"][1]]
@@ -249,13 +262,13 @@ def stitch_set(set, merge_way_raw, folder_name):
                         new_label["flags"] = []
                         new_label["shape_type"] = bb["shape_type"]
                         new_label['label'] = normalize_classname(bb['label'])
-                        new_label["points"] = get_max_bb(p1+p2)
+                        new_label["points"] = get_max_bb(p1 + p2)
                         merged_annotations["shapes"].append(new_label)
                         merged = True
                 if merged:
                     break
 
-        image.save("../"+folder_name + "/" + str(min_col) + str(min_row) + "_merged.png")
+        image.save("../" + folder_name + "/" + str(min_col) + str(min_row) + "_merged.png")
 
         img_annotated = ImageDraw.Draw(image)
 
@@ -267,18 +280,23 @@ def stitch_set(set, merge_way_raw, folder_name):
             if defect["shape_type"] == "polygon":
                 xy = [tuple(x) for x in defect["points"]]
                 img_annotated.polygon(xy, fill=None, outline=color_dict[defect["label"]], width=5)
-        image.save(folder_name + "/" + str(min_col) + str(min_row)+ "_annotated.png")
+        image.save(folder_name + "/" + str(min_col) + str(min_row) + "_annotated.png")
 
-        with open("../"+folder_name + "/" + str(min_col) + str(min_row)+ '_merged.json', 'w') as outfile:
+        with open("../" + folder_name + "/" + str(min_col) + str(min_row) + '_merged.json', 'w') as outfile:
             json.dump(merged_annotations, outfile)
 
 
 G0merge = [["12", "21", "22"], ["31", "32", "41", "42"], ["51", "52"], ["13", "14", "23", "24"], ["33", "34", "43",
-           "44"], ["53", "54"],["15", "16", "25", "26"], ["35", "36", "45", "46"], ["55", "56"], ["17", "18", "27",
-           "28"], ["37", "38", "47", "48"],["57", "58"], ["19", "110", "29", "210"], ["39", "310", "49", "410"], ["59",
-           "510"], ["111", "112", "211", "212"], ["311", "312", "411", "412"], ["511", "512"], ["113", "114", "213",
-           "214"], ["313", "314", "413", "414"], ["513", "514"], ["115", "116", "215", "216"], ["315", "316", "415",
-           "416"],["515", "516"], ["117", "118", "217", "218"], ["317", "318", "417", "418"], ["517", "518"]]
+                                                                                                  "44"], ["53", "54"],
+           ["15", "16", "25", "26"], ["35", "36", "45", "46"], ["55", "56"], ["17", "18", "27",
+                                                                              "28"], ["37", "38", "47", "48"],
+           ["57", "58"], ["19", "110", "29", "210"], ["39", "310", "49", "410"], ["59",
+                                                                                  "510"], ["111", "112", "211", "212"],
+           ["311", "312", "411", "412"], ["511", "512"], ["113", "114", "213",
+                                                          "214"], ["313", "314", "413", "414"], ["513", "514"],
+           ["115", "116", "215", "216"], ["315", "316", "415",
+                                          "416"], ["515", "516"], ["117", "118", "217", "218"],
+           ["317", "318", "417", "418"], ["517", "518"]]
 
-#stitch_set("G0/", G0merge, "G0 2x2 merge")
+# stitch_set("G0/", G0merge, "G0 2x2 merge")
 stitch_all()
