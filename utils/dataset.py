@@ -3,15 +3,15 @@ import os
 import numpy as np
 import cv2
 from mrcnn import utils
-from normalize_classname import normalize_classname
+from utils.normalize_classname import normalize_classname
 
 class Model_Dataset(utils.Dataset):
 
   # model constants, override as needed
-  BASE_IMAGES_DIR = '/home/cabroderick/Data/Images/' # directory where all images can be found
-  BASE_ANNOTATIONS_DIR = '/home/cabroderick/Data/Labels/' # directory where all images labels can be found
+  ROOT_IMG_DIR = './Data/Images/' # directory where all images can be found
+  ROOT_ANNOTATION_DIR = './Data/Labels/' # directory where all images labels can be found
   # VALIDATION_PATH = 'validation.txt' # path to file containing validation images to skip during training
-  IMAGES_DIRS = [] # list of image dirs to train on
+  IMG_DIRS = ['G0'] # list of image dirs to train on
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other'] # all annotation classes
 
@@ -28,12 +28,12 @@ class Model_Dataset(utils.Dataset):
     annotation_paths = []
     image_ids = []
 
-    for i in range(len(self.IMAGES_DIRS)):
+    for i in range(len(self.IMG_DIRS)):
       image_paths.append([])
       annotation_paths.append([])
       image_ids.append([])
-      i_dir = self.BASE_IMAGES_DIR + self.IMAGES_DIRS[i] + '/'
-      a_dir = self.BASE_ANNOTATIONS_DIR + 'Labeled ' + self.IMAGES_DIRS[i] + '/'
+      i_dir = self.ROOT_IMG_DIR + self.IMG_DIRS[i] + '/'
+      a_dir = self.ROOT_ANNOTATION_DIR + 'Labeled ' + self.IMG_DIRS[i] + '/'
       for file in os.listdir(i_dir):
         i_id = file[:-4]
         # if i_id+'.tif' in val_images: # skip validation images
@@ -121,40 +121,82 @@ class Model_Dataset(utils.Dataset):
     width = image.shape[1]
 
     annotation_list = []
-    [annotation_list.append(shape) for shape in annotation_json['shapes'] if shape['shape_type'] =='rectangle'
-     and normalize_classname(shape['label']) != 'gas entrapment porosity'] # get annotations in a list
+    [annotation_list.append(shape) for shape in annotation_json['shapes']
+     if normalize_classname(shape['label']) != 'gas entrapment porosity'] # get annotations in a list
     mask = np.zeros([height, width, len(annotation_list)], dtype='uint8') # initialize array of masks for each bounding box
 
     for i in range(len(annotation_list)):
       a = annotation_list[i]
 
-      # extract row and col data and crop image to annotation size
-      col_min, col_max = int(min(a['points'][0][0], a['points'][1][0])), int(max(a['points'][0][0], a['points'][1][0]))
-      row_min, row_max = int(min(a['points'][0][1], a['points'][1][1])), int(max(a['points'][0][1], a['points'][1][1]))
-      col_min, col_max, row_min, row_max = self.normalize_dimensions(col_min, col_max, row_min, row_max)
-      cropped_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
-      cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
-      edged = cv2.Canny(cropped_img_gray, 30, 200)
+      if a['shape_type'] == 'rectangle':
+        # extract row and col data and crop image to annotation size
+        col_min, col_max = int(min(a['points'][0][0], a['points'][1][0])), int(max(a['points'][0][0], a['points'][1][0]))
+        row_min, row_max = int(min(a['points'][0][1], a['points'][1][1])), int(max(a['points'][0][1], a['points'][1][1]))
+        col_min, col_max, row_min, row_max = self.normalize_dimensions(col_min, col_max, row_min, row_max)
+        cropped_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
+        cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+        edged = cv2.Canny(cropped_img_gray, 30, 200)
 
-      # apply contour to image and fill
-      kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-      dilated = cv2.dilate(edged, kernel)
-      contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-      polygon = np.zeros(cropped_img.shape)
-      color = [255, 255, 255]
-      cv2.fillPoly(polygon, contours, color)
+        # apply contour to image and fill
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+        dilated = cv2.dilate(edged, kernel)
+        contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        polygon = np.zeros(cropped_img.shape)
+        color = [255, 255, 255]
+        cv2.fillPoly(polygon, contours, color)
 
-      # normalize polygon to all boolean values and insert into mask
-      polygon_bool = np.alltrue(polygon == color, axis=2)
-      mask[row_min:row_max, col_min:col_max, i] = polygon_bool
+        # normalize polygon to all boolean values and insert into mask
+        polygon_bool = np.alltrue(polygon == color, axis=2)
+        mask[row_min:row_max, col_min:col_max, i] = polygon_bool
 
-      # draw contour and mask
-      # cv2.drawContours(edged, contours, -1, (0, 255, 0), 1)
-      # imS = cv2.resize(edged, (512, 512))
-      # cv2.imshow('Contours', imS)
-      # cv2.waitKey(0)
-      # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
-      # cv2.waitKey(0)
+        # draw contour and mask
+        # cv2.drawContours(edged, contours, -1, (0, 255, 0), 1)
+        # imS = cv2.resize(edged, (512, 512))
+        # cv2.imshow('Contours', imS)
+        # cv2.waitKey(0)
+        # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
+        # cv2.waitKey(0)
+
+      elif a['shape_type'] == 'polygon': # TODO fix polygon implementation
+        print(image_path, annotation_path)
+
+        # generate mask from polygon points
+        points = []
+        [points.append(coord) for coord in a['points']]
+        points = np.array(points, dtype=np.int32)
+        polygon_mask = np.zeros(image.shape, dtype=np.uint8)
+        cv2.fillPoly(polygon_mask, [points], (255, 255, 255))
+
+        # apply mask
+        cropped_img = cv2.bitwise_and(image, polygon_mask)
+        black_pixels = np.where(
+          (cropped_img[:, :, 0] == 0) &
+          (cropped_img[:, :, 1] == 0) &
+          (cropped_img[:, :, 2] == 0)
+        )
+
+        cropped_img[black_pixels] = (0, 255, 255)
+
+        cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+        edged = cv2.Canny(cropped_img_gray, 30, 200)
+
+        # apply contour to image and fill
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+        dilated = cv2.dilate(edged, kernel)
+        contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        polygon = np.zeros(cropped_img.shape)
+        color = [255, 255, 255]
+        cv2.fillPoly(polygon, contours, color)
+
+        # normalize polygon to all boolean values and insert into mask
+        polygon_bool = np.alltrue(polygon == color, axis=2)
+        mask[:, :, i] = polygon_bool
+
+        # cv2.imshow('img', cv2.resize(cropped_img, (512, 512)))
+        # cv2.waitKey(0)
+        # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
+        # cv2.waitKey(0)
 
       # extract class id and append to list
       class_label = normalize_classname(a['label'])

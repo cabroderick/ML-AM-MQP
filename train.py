@@ -40,6 +40,8 @@ dataset_val = Model_Dataset()
 dataset_val.load_dataset(validation=True)
 dataset_val.prepare()
 
+exit(0)
+
 # configure model
 model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=TrainConfig())
 
@@ -50,7 +52,7 @@ if len(sys.argv) > 2: # optionally load pre-trained weights
 model.train(train_dataset=dataset_train,
            val_dataset=dataset_val,
            learning_rate=config.LEARNING_RATE,
-           epochs=20,
+           epochs=40,
            layers='heads')
 
 # save training results to external file
