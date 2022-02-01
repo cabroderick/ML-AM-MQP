@@ -8,7 +8,7 @@ import json
 import normalize_classname
 
 ROOT_DIR = '../Data/Labels/' # root directory where all JSONs are contained
-SUB_DIRS = ['H6'] # subdirs containing JSONs (remove 'Labeled' from dir name)
+SUB_DIRS = ['J4'] # subdirs containing JSONs (remove 'Labeled' from dir name)
 
 for dir in SUB_DIRS:
     dir_path = ROOT_DIR + 'Labeled ' + dir + '/'

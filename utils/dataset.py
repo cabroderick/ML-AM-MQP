@@ -3,7 +3,6 @@ import os
 import numpy as np
 import cv2
 from mrcnn import utils
-from utils.normalize_classname import normalize_classname
 
 class Model_Dataset(utils.Dataset):
 
@@ -121,8 +120,7 @@ class Model_Dataset(utils.Dataset):
     width = image.shape[1]
 
     annotation_list = []
-    [annotation_list.append(shape) for shape in annotation_json['shapes']
-     if normalize_classname(shape['label']) != 'gas entrapment porosity'] # get annotations in a list
+    [annotation_list.append(shape) for shape in annotation_json['shapes']] # get annotations in a list
     mask = np.zeros([height, width, len(annotation_list)], dtype='uint8') # initialize array of masks for each bounding box
 
     for i in range(len(annotation_list)):
@@ -157,8 +155,8 @@ class Model_Dataset(utils.Dataset):
         # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
         # cv2.waitKey(0)
 
-      elif a['shape_type'] == 'polygon': # TODO fix polygon implementation
-        print(image_path, annotation_path)
+      elif a['shape_type'] == 'polygon':
+        # print(image_path, annotation_path)
 
         # generate mask from polygon points
         points = []
@@ -199,7 +197,7 @@ class Model_Dataset(utils.Dataset):
         # cv2.waitKey(0)
 
       # extract class id and append to list
-      class_label = normalize_classname(a['label'])
+      class_label = a['label']
       class_id = self.CLASSES.index(class_label)
       class_ids.append(class_id)
 
