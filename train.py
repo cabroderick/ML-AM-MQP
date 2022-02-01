@@ -40,8 +40,6 @@ dataset_val = Model_Dataset()
 dataset_val.load_dataset(validation=True)
 dataset_val.prepare()
 
-exit(0)
-
 # configure model
 model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=TrainConfig())
 

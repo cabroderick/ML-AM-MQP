@@ -3,12 +3,12 @@ import os
 from utils.normalize_classname import normalize_classname
 import csv
 
-csv_rows = ['Dataset', '# of images', 'lack of fusion porosity', 'gas entrapment porosity', 'keyhole porosity', 'other', 'total annotation instances']
+csv_rows = ['Dataset', '# of images', 'lack of fusion porosity', 'keyhole porosity', 'other', 'total annotation instances']
 csv_data = []
 
 BASE_IMAGES_DIR = '../Data/Images/' # directory where all images can be found
 BASE_ANNOTATIONS_DIR = '../Data/Labels/' # directory where all images labels can be found
-IMAGES_DIRS = ['H6', 'J8', 'J0', 'J4', 'R6', 'R0']
+IMAGES_DIRS = ['G9', 'H0', 'H4', 'H6', 'H8', 'J0', 'J1', 'J3', 'J4', 'K0', 'Q3', 'R0', 'R6']
 
 for i in range(len(IMAGES_DIRS)):
     row = []
@@ -18,7 +18,6 @@ for i in range(len(IMAGES_DIRS)):
     row.append(str(len(os.listdir(image_dir))))
 
     classes = {'lack of fusion porosity': 0,
-     'gas entrapment porosity': 0,
      'keyhole porosity': 0,
      'other': 0}
 

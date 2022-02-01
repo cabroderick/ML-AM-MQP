@@ -7,10 +7,10 @@ from mrcnn import utils
 class Model_Dataset(utils.Dataset):
 
   # model constants, override as needed
-  ROOT_IMG_DIR = './Data/Images/' # directory where all images can be found
-  ROOT_ANNOTATION_DIR = './Data/Labels/' # directory where all images labels can be found
+  ROOT_IMG_DIR = '/home/cabroderick/Data/Images/' # directory where all images can be found
+  ROOT_ANNOTATION_DIR = '/home/cabroderick/Data/Labels/' # directory where all images labels can be found
   # VALIDATION_PATH = 'validation.txt' # path to file containing validation images to skip during training
-  IMG_DIRS = ['G0'] # list of image dirs to train on
+  IMG_DIRS = ['G9', 'H0', 'H4', 'H6', 'H8', 'J0', 'J1', 'J3', 'J4', 'K0', 'Q3', 'R0', 'R6'] # list of image dirs to train on
   TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
   CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other'] # all annotation classes
 
