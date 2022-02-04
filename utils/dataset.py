@@ -4,202 +4,211 @@ import numpy as np
 import cv2
 from mrcnn import utils
 
+
 class Model_Dataset(utils.Dataset):
+    # model constants, override as needed
+    ROOT_IMG_DIR = '/home/cabroderick/Data/Images/'  # directory where all images can be found
+    ROOT_ANNOTATION_DIR = '/home/cabroderick/Data/Labels/'  # directory where all images labels can be found
+    # VALIDATION_PATH = 'validation.txt' # path to file containing validation images to skip during training
+    IMG_DIRS = ['G9', 'H0', 'H4', 'H6', 'H8', 'J0', 'J1', 'J3', 'J4', 'K0', 'Q3', 'R0',
+                'R6']  # list of image dirs to train on
+    TRAIN_TEST_SPLIT = .8  # proportion of images to use for training set, remainder will be reserved for validation
+    CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other']  # all annotation classes
+    VAL_SHIFT = 17  # number by which the validation test is shifted
 
-  # model constants, override as needed
-  ROOT_IMG_DIR = '/home/cabroderick/Data/Images/' # directory where all images can be found
-  ROOT_ANNOTATION_DIR = '/home/cabroderick/Data/Labels/' # directory where all images labels can be found
-  # VALIDATION_PATH = 'validation.txt' # path to file containing validation images to skip during training
-  IMG_DIRS = ['G9', 'H0', 'H4', 'H6', 'H8', 'J0', 'J1', 'J3', 'J4', 'K0', 'Q3', 'R0', 'R6'] # list of image dirs to train on
-  TRAIN_TEST_SPLIT = .8 # proportion of images to use for training set, remainder will be reserved for validation
-  CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other'] # all annotation classes
-
-  '''
+    '''
   Loads the dataset
   validation: Indicates whether the current set is the validation set
   '''
-  def load_dataset(self, validation=False):
-    # f = open(self.VALIDATION_PATH, 'r+')
-    # val_images = [line.strip() for line in f.readlines()]
-    # f.close()
 
-    image_paths = []
-    annotation_paths = []
-    image_ids = []
+    def load_dataset(self, validation=False):
+        # f = open(self.VALIDATION_PATH, 'r+')
+        # val_images = [line.strip() for line in f.readlines()]
+        # f.close()
 
-    for i in range(len(self.IMG_DIRS)):
-      image_paths.append([])
-      annotation_paths.append([])
-      image_ids.append([])
-      i_dir = self.ROOT_IMG_DIR + self.IMG_DIRS[i] + '/'
-      a_dir = self.ROOT_ANNOTATION_DIR + 'Labeled ' + self.IMG_DIRS[i] + '/'
-      for file in os.listdir(i_dir):
-        i_id = file[:-4]
-        # if i_id+'.tif' in val_images: # skip validation images
-        #     continue
-        image_ids[i].append(i_id)
-        image_paths[i].append(i_dir+i_id+'.tif')
-        annotation_paths[i].append(a_dir+i_id+'.json')
+        image_paths = []
+        annotation_paths = []
+        image_ids = []
 
-    # configure dataset
-    for i in range(len(self.CLASSES)):
-      self.add_class('dataset', i+1, self.CLASSES[i]) # add classes to model
+        for i in range(len(self.IMG_DIRS)):
+            image_paths.append([])
+            annotation_paths.append([])
+            image_ids.append([])
+            i_dir = self.ROOT_IMG_DIR + self.IMG_DIRS[i] + '/'
+            a_dir = self.ROOT_ANNOTATION_DIR + 'Labeled ' + self.IMG_DIRS[i] + '/'
+            for file in os.listdir(i_dir):
+                i_id = file[:-4]
+                # if i_id+'.tif' in val_images: # skip validation images
+                #     continue
+                image_ids[i].append(i_id)
+                image_paths[i].append(i_dir + i_id + '.tif')
+                annotation_paths[i].append(a_dir + i_id + '.json')
 
-    # add images and annotations to dataset, ensuring an even distribution
-    for i in range(len(image_paths)):
-      images = len(image_paths[i])
-      train_images = int(images * self.TRAIN_TEST_SPLIT)
-      val_images = int(images * (1 - self.TRAIN_TEST_SPLIT))
-      if validation:
-        for j in range(val_images):
-          image_id = image_ids[i][j]
-          image_path = image_paths[i][j]
-          annotation_path = annotation_paths[i][j]
+        # configure dataset
+        for i in range(len(self.CLASSES)):
+            self.add_class('dataset', i + 1, self.CLASSES[i])  # add classes to model
 
-          mask, class_ids = self.extract_mask(image_path, annotation_path)
+        # add images and annotations to dataset, ensuring an even distribution
+        for i in range(len(image_paths)):
+            images = len(image_paths[i])
+            train_images = int(images * self.TRAIN_TEST_SPLIT)
+            val_images = int(images * (1 - self.TRAIN_TEST_SPLIT))
+            if validation:
+                for j in range(val_images):
+                    image_id = image_ids[i][(j + self.VAL_SHIFT) % images]
+                    image_path = image_paths[i][(j + self.VAL_SHIFT) % images]
+                    annotation_path = annotation_paths[i][(j + self.VAL_SHIFT) % images]
 
-          if len(mask) != 0: # skip images with no annotations
-              self.add_image('dataset',
-                             image_id=image_id,
-                             path=image_path,
-                             mask=mask,
-                             class_ids=class_ids)
+                    mask, class_ids = self.extract_mask(image_path, annotation_path)
 
-      else:
-        for j in range(train_images):
-          image_id = image_ids[i][j + val_images]
-          image_path = image_paths[i][j + val_images]
-          annotation_path = annotation_paths[i][j + val_images]
+                    if len(mask) != 0:  # skip images with no annotations
+                        self.add_image('dataset',
+                                       image_id=image_id,
+                                       path=image_path,
+                                       mask=mask,
+                                       class_ids=class_ids)
 
-          mask, class_ids = self.extract_mask(image_path, annotation_path)
+            else:
+                for j in range(train_images):
+                    image_id = image_ids[i][(j + val_images + self.VAL_SHIFT) % images]
+                    image_path = image_paths[i][(j + val_images + self.VAL_SHIFT) % images]
+                    annotation_path = annotation_paths[i][(j + val_images + self.VAL_SHIFT) % images]
 
-          if len(mask) != 0:
-              self.add_image('dataset',
-                             image_id=image_id,
-                             path=image_path,
-                             mask=mask,
-                             class_ids=class_ids)
+                    mask, class_ids = self.extract_mask(image_path, annotation_path)
 
-  '''
+                    if len(mask) != 0:
+                        self.add_image('dataset',
+                                       image_id=image_id,
+                                       path=image_path,
+                                       mask=mask,
+                                       class_ids=class_ids)
+
+    '''
   Extracts a mask from an image
   image_id: The image id to extract the mask from
   Returns a mask and a corresponding list of class ids
   '''
-  def load_mask(self, image_id):
 
-    info = self.image_info[image_id] # extract image info from data added earlier
-    mask = info['mask']
-    class_ids = info['class_ids']
+    def load_mask(self, image_id):
 
-    return mask, class_ids
+        info = self.image_info[image_id]  # extract image info from data added earlier
+        mask = info['mask']
+        class_ids = info['class_ids']
 
-  '''
+        return mask, class_ids
+
+    '''
   Extracts the mask data from an image and its respective annotation
   image_path: Path to the image
   annotation_path: Path to the annotation
   Returns a mask and a list of class ids
   '''
-  def extract_mask(self, image_path, annotation_path):
-    print(image_path, annotation_path)
 
-    f_ann = open(annotation_path,)
-    annotation_json = json.load(f_ann)
+    def extract_mask(self, image_path, annotation_path):
+        print(image_path, annotation_path)
 
-    if not annotation_json['shapes']: # if there are no annotations to be extracted
-        return [], [] # empty list return values will be ignored and thus image is ignored
+        f_ann = open(annotation_path, )
+        annotation_json = json.load(f_ann)
 
-    class_ids = []
-    image = cv2.imread(image_path)
-    height = image.shape[0]
-    width = image.shape[1]
+        if not annotation_json['shapes']:  # if there are no annotations to be extracted
+            return [], []  # empty list return values will be ignored and thus image is ignored
 
-    annotation_list = []
-    [annotation_list.append(shape) for shape in annotation_json['shapes']
-     if shape['shape_type'] != 'circle'] # get annotations in a list
-    mask = np.zeros([height, width, len(annotation_list)], dtype='uint8') # initialize array of masks for each bounding box
+        class_ids = []
+        image = cv2.imread(image_path)
+        height = image.shape[0]
+        width = image.shape[1]
 
-    for i in range(len(annotation_list)):
-      a = annotation_list[i]
+        annotation_list = []
+        [annotation_list.append(shape) for shape in annotation_json['shapes']
+         if shape['shape_type'] != 'circle']  # get annotations in a list
+        mask = np.zeros([height, width, len(annotation_list)],
+                        dtype='uint8')  # initialize array of masks for each bounding box
 
-      if a['shape_type'] == 'rectangle':
-        # extract row and col data and crop image to annotation size
-        col_min, col_max = int(min(a['points'][0][0], a['points'][1][0])), int(max(a['points'][0][0], a['points'][1][0]))
-        row_min, row_max = int(min(a['points'][0][1], a['points'][1][1])), int(max(a['points'][0][1], a['points'][1][1]))
-        col_min, col_max, row_min, row_max = self.normalize_dimensions(col_min, col_max, row_min, row_max)
-        cropped_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
-        cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
-        edged = cv2.Canny(cropped_img_gray, 30, 200)
+        for i in range(len(annotation_list)):
+            a = annotation_list[i]
 
-        # apply contour to image and fill
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-        dilated = cv2.dilate(edged, kernel)
-        contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        polygon = np.zeros(cropped_img.shape)
-        color = [255, 255, 255]
-        cv2.fillPoly(polygon, contours, color)
+            if a['shape_type'] == 'rectangle':
+                # extract row and col data and crop image to annotation size
+                col_min, col_max = int(min(a['points'][0][0], a['points'][1][0])), int(
+                    max(a['points'][0][0], a['points'][1][0]))
+                row_min, row_max = int(min(a['points'][0][1], a['points'][1][1])), int(
+                    max(a['points'][0][1], a['points'][1][1]))
+                col_min, col_max, row_min, row_max = self.normalize_dimensions(col_min, col_max, row_min, row_max)
+                cropped_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
+                cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+                edged = cv2.Canny(cropped_img_gray, 30, 200)
 
-        # normalize polygon to all boolean values and insert into mask
-        polygon_bool = np.alltrue(polygon == color, axis=2)
-        mask[row_min:row_max, col_min:col_max, i] = polygon_bool
+                # apply contour to image and fill
+                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+                dilated = cv2.dilate(edged, kernel)
+                contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                polygon = np.zeros(cropped_img.shape)
+                color = [255, 255, 255]
+                cv2.fillPoly(polygon, contours, color)
 
-        # draw contour and mask
-        # cv2.drawContours(edged, contours, -1, (0, 255, 0), 1)
-        # imS = cv2.resize(edged, (512, 512))
-        # cv2.imshow('Contours', imS)
-        # cv2.waitKey(0)
-        # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
-        # cv2.waitKey(0)
+                # normalize polygon to all boolean values and insert into mask
+                polygon_bool = np.alltrue(polygon == color, axis=2)
+                mask[row_min:row_max, col_min:col_max, i] = polygon_bool
 
-      elif a['shape_type'] == 'polygon':
-        # print(image_path, annotation_path)
+                # draw contour and mask
+                # cv2.drawContours(edged, contours, -1, (0, 255, 0), 1)
+                # imS = cv2.resize(edged, (512, 512))
+                # cv2.imshow('Contours', imS)
+                # cv2.waitKey(0)
+                # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
+                # cv2.waitKey(0)
 
-        # generate mask from polygon points
-        points = []
-        [points.append(coord) for coord in a['points']]
-        points = np.array(points, dtype=np.int32)
-        polygon_mask = np.zeros(image.shape, dtype=np.uint8)
-        cv2.fillPoly(polygon_mask, [points], (255, 255, 255))
+            elif a['shape_type'] == 'polygon':
+                # print(image_path, annotation_path)
 
-        # apply mask
-        cropped_img = cv2.bitwise_and(image, polygon_mask)
-        black_pixels = np.where(
-          (cropped_img[:, :, 0] == 0) &
-          (cropped_img[:, :, 1] == 0) &
-          (cropped_img[:, :, 2] == 0)
-        )
+                # generate mask from polygon points
+                points = []
+                [points.append(coord) for coord in a['points']]
+                points = np.array(points, dtype=np.int32)
+                polygon_mask = np.zeros(image.shape, dtype=np.uint8)
+                cv2.fillPoly(polygon_mask, [points], (255, 255, 255))
 
-        cropped_img[black_pixels] = (0, 255, 255)
+                # apply mask
+                cropped_img = cv2.bitwise_and(image, polygon_mask)
+                black_pixels = np.where(
+                    (cropped_img[:, :, 0] == 0) &
+                    (cropped_img[:, :, 1] == 0) &
+                    (cropped_img[:, :, 2] == 0)
+                )
 
-        cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
-        edged = cv2.Canny(cropped_img_gray, 30, 200)
+                cropped_img[black_pixels] = (0, 255, 255)
 
-        # apply contour to image and fill
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-        dilated = cv2.dilate(edged, kernel)
-        contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+                edged = cv2.Canny(cropped_img_gray, 30, 200)
 
-        polygon = np.zeros(cropped_img.shape)
-        color = [255, 255, 255]
-        cv2.fillPoly(polygon, contours, color)
+                # apply contour to image and fill
+                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+                dilated = cv2.dilate(edged, kernel)
+                contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # normalize polygon to all boolean values and insert into mask
-        polygon_bool = np.alltrue(polygon == color, axis=2)
-        mask[:, :, i] = polygon_bool
+                polygon = np.zeros(cropped_img.shape)
+                color = [255, 255, 255]
+                cv2.fillPoly(polygon, contours, color)
 
-        # cv2.imshow('img', cv2.resize(cropped_img, (512, 512)))
-        # cv2.waitKey(0)
-        # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
-        # cv2.waitKey(0)
+                # normalize polygon to all boolean values and insert into mask
+                polygon_bool = np.alltrue(polygon == color, axis=2)
+                mask[:, :, i] = polygon_bool
 
-      # extract class id and append to list
-      class_label = a['label']
-      class_id = self.CLASSES.index(class_label)
-      class_ids.append(class_id)
+                # cv2.imshow('img', cv2.resize(cropped_img, (512, 512)))
+                # cv2.waitKey(0)
+                # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
+                # cv2.waitKey(0)
 
-    return mask.astype(np.bool), np.array(class_ids, dtype=np.int32)
+            # extract class id and append to list
+            class_label = a['label']
+            class_id = self.CLASSES.index(class_label)
+            class_ids.append(class_id)
 
-  '''
+        return mask.astype(np.bool), np.array(class_ids, dtype=np.int32)
+
+    '''
   Ensures extracted row and column coords are not out of bounds
   '''
-  def normalize_dimensions(self, col_min, col_max, row_min, row_max):
-      return max(col_min, 0), col_max, max(row_min, 0), row_max
+
+    def normalize_dimensions(self, col_min, col_max, row_min, row_max):
+        return max(col_min, 0), col_max, max(row_min, 0), row_max
