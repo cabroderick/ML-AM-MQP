@@ -41,9 +41,6 @@ class Model_Dataset(utils.Dataset):
         image_paths[i].append(i_dir+i_id+'.tif')
         annotation_paths[i].append(a_dir+i_id+'.json')
 
-    if (len(image_paths) != len(annotation_paths)): # raise exception if mismatch betwaeen number of images and annotations
-      raise(ValueError('Number of images and annotations must be equal'))
-
     # configure dataset
     for i in range(len(self.CLASSES)):
       self.add_class('dataset', i+1, self.CLASSES[i]) # add classes to model
@@ -117,7 +114,8 @@ class Model_Dataset(utils.Dataset):
     width = image.shape[1]
 
     annotation_list = []
-    [annotation_list.append(shape) for shape in annotation_json['shapes']] # get annotations in a list
+    [annotation_list.append(shape) for shape in annotation_json['shapes']
+     if shape['shape_type'] != 'circle'] # get annotations in a list
     mask = np.zeros([height, width, len(annotation_list)], dtype='uint8') # initialize array of masks for each bounding box
 
     for i in range(len(annotation_list)):
