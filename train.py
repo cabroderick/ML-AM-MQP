@@ -1,6 +1,6 @@
 '''
 Mask RCNN model training on custom AM dataset for train use on WPI HPC cluster
-Usage: python train.py [model name] [pre-trained weights file path] [path to directory list] [path to test set list]
+Usage: python train.py [model name] [pre-trained weights file path] [path to directory list] [path to test set list] [optional config file]
 '''
 
 import sys
@@ -15,7 +15,7 @@ if len(sys.argv) < 5:
 # Configuration
 ######################################
 class TrainConfig(Config):
-    NAME = "custom_mcrnn"
+    NAME = "mrcnn-model"
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
     NUM_CLASSES = 1 + 3 # 3 classes + background
@@ -33,6 +33,27 @@ img_dirs = paths_file.readlines()
 # load list of test images
 paths_file_test = open(sys.argv[4], 'r')
 test_imgs = paths_file_test.readlines()
+
+# load config file if specified
+if len(sys.argv > 5):
+    config_file = open(sys.argv[5])
+    config_args = config_file.readlines()
+    for arg in config_args:
+        arg, val = arg.replace(' ', '').split('=')
+        if arg == 'LEARNING_RATE':
+            TrainConfig.LEARNING_RATE = val
+        elif arg == 'BATCH_SIZE':
+            TrainConfig.BATCH_SIZE = val
+        elif arg == 'STEPS_PER_EPOCH':
+            TrainConfig.STEPS_PER_EPOCH = val
+        elif arg == 'VALIDATION_STEPS':
+            TrainConfig.VALIDATION_STEPS = val
+        elif arg == 'IMAGE_MIN_DIM':
+            TrainConfig.IMAGE_MIN_DIM = val
+        elif arg == 'IMAGE_MAX_DIM':
+            TrainConfig.IMAGE_MAX_DIM = val
+        elif arg == 'IMAGES_PER_GPU':
+            TrainConfig.IMAGES_PER_GPU = val
 
 #######################################
 # Training
