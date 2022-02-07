@@ -29,18 +29,18 @@ config = TrainConfig()
 # load list of img dirs
 paths_file = open(sys.argv[3], 'r')
 img_dirs = paths_file.readlines()
-[line.replace('\n', '') for line in img_dirs]
+[line.rstrip('\n') for line in img_dirs]
 
 # load list of test images
 paths_file_test = open(sys.argv[4], 'r')
 test_imgs = paths_file_test.readlines()
-[line.replace('\n', '') for line in test_imgs]
+[line.rstrip('\n') for line in test_imgs]
 
 # load config file if specified
 if len(sys.argv) > 5:
     config_file = open(sys.argv[5])
     config_args = config_file.readlines()
-    [line.replace('\n', '') for line in config_args]
+    [line.rstrip('\n') for line in config_args]
     for arg in config_args:
         arg, val = arg.replace(' ', '').split('=')
         if arg == 'LEARNING_RATE':
