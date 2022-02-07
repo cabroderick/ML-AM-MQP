@@ -35,6 +35,7 @@ class Model_Dataset(utils.Dataset):
                 i_id = file[:-4]
                 row_col = i_id[-2:]
                 if row_col in self.TEST_SET:
+                    print('Test set image read - skipping')
                     continue
                 image_ids[i].append(i_id)
                 image_paths[i].append(i_dir + i_id + '.tif')
