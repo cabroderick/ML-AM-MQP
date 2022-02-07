@@ -5,6 +5,7 @@
 *.name
 *.h5
 *.tif
+*.png
 *.json
 /.idea/.gitignore
 /.ipynb_checkpoints/

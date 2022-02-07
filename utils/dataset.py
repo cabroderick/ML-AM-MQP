@@ -9,10 +9,9 @@ class Model_Dataset(utils.Dataset):
     # model constants, override as needed
     ROOT_IMG_DIR = '/home/cabroderick/Data/Images/'  # directory where all images can be found
     ROOT_ANNOTATION_DIR = '/home/cabroderick/Data/Labels/'  # directory where all images labels can be found
-    # VALIDATION_PATH = 'validation.txt' # path to file containing validation images to skip during training
-    IMG_DIRS = ['G9', 'H0', 'H4', 'H6', 'H8', 'J0', 'J1', 'J3', 'J4', 'K0', 'Q3', 'R0',
-                'R6']  # list of image dirs to train on
+    IMG_DIRS = []  # list of image dirs to train on
     TRAIN_TEST_SPLIT = .8  # proportion of images to use for training set, remainder will be reserved for validation
+    TEST_SET = [] # list of row/col combinations of images to reserve for validation
     CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other']  # all annotation classes
     VAL_SHIFT = 17  # number by which the validation test is shifted
 
@@ -22,10 +21,6 @@ class Model_Dataset(utils.Dataset):
   '''
 
     def load_dataset(self, validation=False):
-        # f = open(self.VALIDATION_PATH, 'r+')
-        # val_images = [line.strip() for line in f.readlines()]
-        # f.close()
-
         image_paths = []
         annotation_paths = []
         image_ids = []
@@ -38,8 +33,9 @@ class Model_Dataset(utils.Dataset):
             a_dir = self.ROOT_ANNOTATION_DIR + 'Labeled ' + self.IMG_DIRS[i] + '/'
             for file in os.listdir(i_dir):
                 i_id = file[:-4]
-                # if i_id+'.tif' in val_images: # skip validation images
-                #     continue
+                row_col = i_id[-2:]
+                if row_col in self.TEST_SET:
+                    continue
                 image_ids[i].append(i_id)
                 image_paths[i].append(i_dir + i_id + '.tif')
                 annotation_paths[i].append(a_dir + i_id + '.json')
