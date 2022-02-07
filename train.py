@@ -29,18 +29,19 @@ config = TrainConfig()
 # load list of img dirs
 paths_file = open(sys.argv[3], 'r')
 img_dirs = paths_file.readlines()
-[line.rstrip('\n') for line in img_dirs]
+img_dirs = [line.rstrip('\n') for line in img_dirs]
+print(img_dirs)
 
 # load list of test images
 paths_file_test = open(sys.argv[4], 'r')
 test_imgs = paths_file_test.readlines()
-[line.rstrip('\n') for line in test_imgs]
+test_imgs = [line.rstrip('\n') for line in test_imgs]
 
 # load config file if specified
 if len(sys.argv) > 5:
     config_file = open(sys.argv[5])
     config_args = config_file.readlines()
-    [line.rstrip('\n') for line in config_args]
+    config_args = [line.rstrip('\n') for line in config_args]
     for arg in config_args:
         arg, val = arg.replace(' ', '').split('=')
         if arg == 'LEARNING_RATE':
@@ -78,7 +79,7 @@ dataset_val.prepare()
 # configure model
 model = MaskRCNN(mode='training', model_dir='./'+sys.argv[1]+'/', config=TrainConfig())
 
-model.load_weights(sys.argv[3], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
+model.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",  "mrcnn_bbox", "mrcnn_mask"])
 
 # train model
 model.train(train_dataset=dataset_train,
