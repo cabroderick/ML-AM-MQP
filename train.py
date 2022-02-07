@@ -37,7 +37,7 @@ test_imgs = paths_file_test.readlines()
 [line.strip() for line in test_imgs]
 
 # load config file if specified
-if len(sys.argv > 5):
+if len(sys.argv) > 5:
     config_file = open(sys.argv[5])
     config_args = config_file.readlines()
     [line.strip() for line in config_args]
