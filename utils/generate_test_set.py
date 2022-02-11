@@ -21,6 +21,7 @@ for i in range(len(IMG_DIRS)):
             current_row = row
         else:
             current_ids.append(path[:-4])
+    img_ids[i].append(current_ids)
 
 lines = [] # lines to write to output file
 for set in img_ids:
