@@ -11,7 +11,7 @@ class Model_Dataset(utils.Dataset):
     ROOT_ANNOTATION_DIR = '/home/cabroderick/Data/Labels/'  # directory where all images labels can be found
     IMG_DIRS = []  # list of image dirs to train on
     TRAIN_TEST_SPLIT = .8  # proportion of images to use for training set, remainder will be reserved for validation
-    TEST_SET = [] # list of row/col combinations of images to reserve for validation
+    TEST_SET = [] # images reserved for test set
     CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other']  # all annotation classes
     VAL_SHIFT = 17  # number by which the validation test is shifted
 
@@ -33,8 +33,7 @@ class Model_Dataset(utils.Dataset):
             a_dir = self.ROOT_ANNOTATION_DIR + 'Labeled ' + self.IMG_DIRS[i] + '/'
             for file in os.listdir(i_dir):
                 i_id = file[:-4]
-                row_col = i_id[-2:]
-                if row_col in self.TEST_SET:
+                if i_id in self.TEST_SET:
                     print('Test set image read - skipping')
                     continue
                 image_ids[i].append(i_id)

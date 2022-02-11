@@ -9,12 +9,9 @@ from mrcnn import visualize
 import sys
 import cv2
 
-if len(sys.argv) < 3:
-    sys.exit('Insufficient arguments')
-
-WEIGHTS_PATH = sys.argv[1]
-IMG_PATH = sys.argv[2]
-CLASSES = ['gas entrapment porosity', 'lack of fusion porosity', 'keyhole porosity']
+WEIGHTS_PATH = '../weights/mrcnn-2-7.h5'
+IMG_PATH = '../Data/Images/H6/A1H6COL_319.tif'
+CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other']
 
 ############################################
 # Configure model and load weights
@@ -45,4 +42,5 @@ visualize.display_instances(image=image,
                                   masks=r['masks'],
                                   class_ids=r['class_ids'],
                                   class_names=CLASSES,
-                                  scores=r['scores'])
+                                  scores=r['scores'],
+                                  show_mask=False)
