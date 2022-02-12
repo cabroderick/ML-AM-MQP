@@ -79,6 +79,48 @@ class Model_Dataset(utils.Dataset):
                                        mask=mask,
                                        class_ids=class_ids)
 
+        '''
+        Loads the dataset for inference models (only reads from TEST_SET)
+        '''
+        def load_dataset_inference(self):
+            image_paths = []
+            annotation_paths = []
+            image_ids = []
+
+            for i in range(len(self.IMG_DIRS)):
+                image_paths.append([])
+                annotation_paths.append([])
+                image_ids.append([])
+                i_dir = self.ROOT_IMG_DIR + self.IMG_DIRS[i] + '/'
+                a_dir = self.ROOT_ANNOTATION_DIR + 'Labeled ' + self.IMG_DIRS[i] + '/'
+                for file in os.listdir(i_dir):
+                    i_id = file[:-4]
+                    if i_id not in self.TEST_SET: # skip all images not found in TEST_SET
+                        print('Image not in test set - skipping')
+                        continue
+                    image_ids[i].append(i_id)
+                    image_paths[i].append(i_dir + i_id + '.tif')
+                    annotation_paths[i].append(a_dir + i_id + '.json')
+
+            # configure dataset
+            for i in range(len(self.CLASSES)):
+                self.add_class('dataset', i + 1, self.CLASSES[i])  # add classes to model
+
+            # add images and annotations to dataset, ensuring an even distribution
+            for i in range(len(image_paths)):
+                for j in range(len(image_paths[i])):
+                    image_id = image_ids[i][j]
+                    image_path = image_paths[i][j]
+                    annotation_path = annotation_paths[i][j]
+                    mask, class_ids = self.extract_mask(image_path, annotation_path)
+                    if len(mask) != 0:  # skip images with no annotations
+                        self.add_image('dataset',
+                                       image_id=image_id,
+                                       path=image_path,
+                                       mask=mask,
+                                       class_ids=class_ids)
+
+
     '''
   Extracts a mask from an image
   image_id: The image id to extract the mask from
