@@ -22,8 +22,6 @@ class TrainConfig(Config):
     STEPS_PER_EPOCH = 100
     VALIDATION_STEPS = 5
     LEARNING_RATE = .001
-    BATCH_SIZE = 1
-    BACKBONE = 'resnet50'
 
 config = TrainConfig()
 
@@ -47,8 +45,6 @@ if len(sys.argv) > 5:
         arg, val = arg.replace(' ', '').split('=')
         if arg == 'LEARNING_RATE':
             TrainConfig.LEARNING_RATE = val
-        elif arg == 'BATCH_SIZE':
-            TrainConfig.BATCH_SIZE = val
         elif arg == 'STEPS_PER_EPOCH':
             TrainConfig.STEPS_PER_EPOCH = val
         elif arg == 'VALIDATION_STEPS':
@@ -63,6 +59,10 @@ if len(sys.argv) > 5:
             TrainConfig.BACKBONE = val
         elif arg == 'MAX_GT_INSTANCES':
             TrainConfig.MAX_GT_INSTANCES = val
+        elif arg == 'LEARNING_MOMENTUM':
+            TrainConfig.LEARNING_MOMENTUM = val
+        elif arg == 'OPTIMIZER':
+            TrainConfig.OPTIMIZER = val
 
 #######################################
 # Training
