@@ -18,11 +18,12 @@ class TrainConfig(Config):
     NAME = "mrcnn-model"
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
-    NUM_CLASSES = 1 + 3 # 3 classes + background
+    NUM_CLASSES = 3 + 1 # 3 classes + background
     STEPS_PER_EPOCH = 100
     VALIDATION_STEPS = 5
     LEARNING_RATE = .001
     BATCH_SIZE = 1
+    BACKBONE = 'resnet50'
 
 config = TrainConfig()
 
@@ -58,6 +59,10 @@ if len(sys.argv) > 5:
             TrainConfig.IMAGE_MAX_DIM = val
         elif arg == 'IMAGES_PER_GPU':
             TrainConfig.IMAGES_PER_GPU = val
+        elif arg == 'BACKBONE':
+            TrainConfig.BACKBONE = val
+        elif arg == 'MAX_GT_INSTANCES':
+            TrainConfig.MAX_GT_INSTANCES = val
 
 #######################################
 # Training
