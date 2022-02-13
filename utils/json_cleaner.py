@@ -17,12 +17,11 @@ for dir in SUB_DIRS:
         print(ann_path)
         with open(ann_path, 'r') as f_ann: # read JSON
             annotation_json = json.load(f_ann)
-        # rename filenames to remove 20X_YZ.json
 
         shapes = []
         for shape in annotation_json['shapes']:
             shape['label'] = normalize_classname.normalize_classname(shape['label'])
-            if shape['label'] != 'gas entrapment porosity':
+            if shape['label'] != 'gas entrapment porosity' and shape['label'] != 'other':
                 shapes.append(shape)
 
         os.remove(ann_path) # delete old ann path
