@@ -17,7 +17,7 @@ if len(sys.argv) < 5:
 class TrainConfig(Config):
     NAME = "mrcnn-model"
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 1
+    IMAGES_PER_GPU = 2
     NUM_CLASSES = 2 + 1 # 2 classes + background
     STEPS_PER_EPOCH = 100
     VALIDATION_STEPS = 5
@@ -45,9 +45,11 @@ if len(sys.argv) > 5:
     for arg in config_args:
         arg, val = arg.replace(' ', '').split('=')
         if arg == 'LEARNING_RATE':
-            TrainConfig.LEARNING_RATE = val
+            TrainConfig.LEARNING_RATE = float(val)
+            print('Learning rate set to ' + str(val))
         elif arg == 'STEPS_PER_EPOCH':
-            TrainConfig.STEPS_PER_EPOCH = val
+            TrainConfig.STEPS_PER_EPOCH = int(val)
+            print('Steps per epoch set to ' + str(val))
         elif arg == 'VALIDATION_STEPS':
             TrainConfig.VALIDATION_STEPS = val
         elif arg == 'IMAGE_MIN_DIM':
@@ -95,4 +97,4 @@ model.train(train_dataset=dataset_train,
            layers='heads')
 
 # save training results to external file
-model.keras_model.save_weights(sys.argv[1]+'.h5')
+model.keras_model.save_weights('./'+sys.argv[1]+'/'+sys.argv[1]+'.h5')
