@@ -25,6 +25,7 @@ class TrainConfig(Config):
     OPTIMIZER = 'ADAM'
 
 config = TrainConfig()
+config.display()
 
 # load list of img dirs
 paths_file = open(sys.argv[3], 'r')
