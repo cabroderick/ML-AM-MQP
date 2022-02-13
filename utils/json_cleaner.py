@@ -25,7 +25,7 @@ for dir in SUB_DIRS:
                 shapes.append(shape)
 
         os.remove(ann_path) # delete old ann path
-        if file[-12:] == '_20X_YZ.json':
+        if file[-12:].replace('-', '_').lower() == '_20x_yz.json':
             ann_path = ann_path[:-12] + ann_path[-5:] # remove 20X_YZ at the end of annotations
 
         annotation_json['shapes'] = shapes
