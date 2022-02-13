@@ -4,7 +4,6 @@ import numpy as np
 import cv2
 from mrcnn import utils
 
-
 class Model_Dataset(utils.Dataset):
     # model constants, override as needed
     ROOT_IMG_DIR = '/home/cabroderick/Data/Images/'  # directory where all images can be found
@@ -12,14 +11,13 @@ class Model_Dataset(utils.Dataset):
     IMG_DIRS = []  # list of image dirs to train on
     TRAIN_TEST_SPLIT = .8  # proportion of images to use for training set, remainder will be reserved for validation
     TEST_SET = [] # images reserved for test set
-    CLASSES = ['lack of fusion porosity', 'keyhole porosity', 'other']  # all annotation classes
+    CLASSES = ['lack of fusion porosity', 'keyhole porosity']  # all annotation classes
     VAL_SHIFT = 17  # number by which the validation test is shifted
 
     '''
   Loads the dataset
   validation: Indicates whether the current set is the validation set
   '''
-
     def load_dataset(self, validation=False):
         image_paths = []
         annotation_paths = []
@@ -126,7 +124,6 @@ class Model_Dataset(utils.Dataset):
   image_id: The image id to extract the mask from
   Returns a mask and a corresponding list of class ids
   '''
-
     def load_mask(self, image_id):
 
         info = self.image_info[image_id]  # extract image info from data added earlier
@@ -141,7 +138,6 @@ class Model_Dataset(utils.Dataset):
   annotation_path: Path to the annotation
   Returns a mask and a list of class ids
   '''
-
     def extract_mask(self, image_path, annotation_path):
         print(image_path, annotation_path)
 
@@ -188,17 +184,7 @@ class Model_Dataset(utils.Dataset):
                 polygon_bool = np.alltrue(polygon == color, axis=2)
                 mask[row_min:row_max, col_min:col_max, i] = polygon_bool
 
-                # draw contour and mask
-                # cv2.drawContours(edged, contours, -1, (0, 255, 0), 1)
-                # imS = cv2.resize(edged, (512, 512))
-                # cv2.imshow('Contours', imS)
-                # cv2.waitKey(0)
-                # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
-                # cv2.waitKey(0)
-
             elif a['shape_type'] == 'polygon':
-                # print(image_path, annotation_path)
-
                 # generate mask from polygon points
                 points = []
                 [points.append(coord) for coord in a['points']]
@@ -232,11 +218,6 @@ class Model_Dataset(utils.Dataset):
                 polygon_bool = np.alltrue(polygon == color, axis=2)
                 mask[:, :, i] = polygon_bool
 
-                # cv2.imshow('img', cv2.resize(cropped_img, (512, 512)))
-                # cv2.waitKey(0)
-                # cv2.imshow('Polygon', cv2.resize(polygon, (512, 512)))
-                # cv2.waitKey(0)
-
             # extract class id and append to list
             class_label = a['label']
             class_id = self.CLASSES.index(class_label)
@@ -247,6 +228,5 @@ class Model_Dataset(utils.Dataset):
     '''
   Ensures extracted row and column coords are not out of bounds
   '''
-
     def normalize_dimensions(self, col_min, col_max, row_min, row_max):
         return max(col_min, 0), col_max, max(row_min, 0), row_max

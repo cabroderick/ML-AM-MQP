@@ -18,10 +18,11 @@ class TrainConfig(Config):
     NAME = "mrcnn-model"
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
-    NUM_CLASSES = 3 + 1 # 3 classes + background
+    NUM_CLASSES = 2 + 1 # 2 classes + background
     STEPS_PER_EPOCH = 100
     VALIDATION_STEPS = 5
     LEARNING_RATE = .001
+    OPTIMIZER = 'ADAM'
 
 config = TrainConfig()
 
@@ -90,7 +91,7 @@ model.load_weights(sys.argv[2], by_name=True, exclude=["mrcnn_class_logits", "mr
 model.train(train_dataset=dataset_train,
            val_dataset=dataset_val,
            learning_rate=config.LEARNING_RATE,
-           epochs=40,
+           epochs=200,
            layers='heads')
 
 # save training results to external file
