@@ -3,12 +3,13 @@ Computes mean average precision over a set of images
 Usage: python compute_mAP.py [pre-trained weight path] [image dirs path] [test set path]
 '''
 import sys
+import os
 import mrcnn.model as modellib
 from mrcnn.model import MaskRCNN
 from mrcnn.config import Config
 from mrcnn import utils
 import numpy as np
-from dataset import ModelDataset
+from dataset import Model_Dataset
 
 class InferenceConfig(Config):
     NAME = 'inference'
@@ -24,8 +25,8 @@ with open(sys.argv[3], 'r') as f:
 config = InferenceConfig()
 dataset = Model_Dataset()
 dataset.CLASSES = ['lack of fusion porosity', 'keyhole porosity']
-dataset.ROOT_IMG_DIR = '~/Data/Images/'
-dataset.ROOT_ANNOTATION_DIR = '~/Data/Labels/'
+dataset.ROOT_IMG_DIR = os.path.expanduser('~') + '/Data/Images/'
+dataset.ROOT_ANNOTATION_DIR = os.path.expanduser('~') + '/Data/Labels/'
 dataset.IMG_DIRS = img_dirs
 dataset.TEST_SET = test_imgs
 dataset.load_dataset_inference()
