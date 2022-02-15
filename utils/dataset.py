@@ -7,7 +7,7 @@ from mrcnn import utils
 class Model_Dataset(utils.Dataset):
     # model constants, override as needed
     ROOT_IMG_DIR = os.path.expanduser('~') + '/Data/Images/'  # directory where all images can be found
-    ROOT_ANNOTATION_DIR = 'os.path.expanduser(~)' + '/home/cabroderick/Data/Labels/'  # directory where all images labels can be found
+    ROOT_ANNOTATION_DIR = 'os.path.expanduser(~)' + '/Data/Labels/'  # directory where all images labels can be found
     IMG_DIRS = []  # list of image dirs to train on
     TRAIN_TEST_SPLIT = .8  # proportion of images to use for training set, remainder will be reserved for validation
     TEST_SET = [] # images reserved for test set
