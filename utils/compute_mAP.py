@@ -2,6 +2,7 @@
 Computes mean average precision over a set of images
 Usage: python compute_mAP.py [pre-trained weight path] [image dirs path] [test set path]
 '''
+import math
 import sys
 import os
 import mrcnn.model as modellib
@@ -39,6 +40,7 @@ model.load_weights(filepath=sys.argv[1], by_name=True)
 APs = []
 for image_id in dataset.image_ids:
     # Load image and ground truth data
+    print(dataset.image_info[image_id]['path'])
     image, image_meta, gt_class_id, gt_bbox, gt_mask = \
         modellib.load_image_gt(dataset, config,
                                image_id, use_mini_mask=False)
@@ -50,6 +52,8 @@ for image_id in dataset.image_ids:
     AP, precisions, recalls, overlaps = \
         utils.compute_ap(gt_bbox, gt_class_id, gt_mask,
                          r["rois"], r["class_ids"], r["scores"], r['masks'])
-    APs.append(AP)
+    if not math.isnan(AP):
+        APs.append(AP)
+    print('AP for this image: ' + str(AP))
 
 print("mAP: ", np.mean(APs))
