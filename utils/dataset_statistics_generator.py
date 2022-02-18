@@ -76,3 +76,32 @@ for d in DIRS:
             data[d][class_type].append(total_area)
 new_df = pd.DataFrame.from_dict(data)
 new_df.to_csv("area_dist.csv")
+
+all_areas_keyhole = []
+all_areas_LOF = []
+
+for key in data.keys():
+    all_areas_keyhole += data[key]["keyhole porosity"]
+    all_areas_LOF += data[key]["lack of fusion porosity"]
+
+string_text = f'Keyhole count: {len(all_areas_keyhole)}; LOF count: {len(all_areas_LOF)}'
+
+print(string_text)
+
+plt.title("Distibution of pore areas for lack of fusion porosity")
+_ = plt.hist(all_areas_LOF)
+plt.xlabel("Size")
+plt.ylabel("Frequency")
+plt.savefing("lof_freq.png")
+
+plt.title("Distibution of pore areas for keyhole porosity")
+_ = plt.hist(all_areas_keyhole)
+plt.savefing("keyhole_freq.png")
+
+sorted_lof = all_areas_LOF.sort()
+bin_size = int(len(all_areas_LOF)/3)
+print(f'Bin 1: 0, {bin_size}')
+print(f'Bin 2: {bin_size}, {bin_size*2}')
+print(f'Bin 3: {bin_size*2+1}, {sorted_lof[-1]}')
+
+
