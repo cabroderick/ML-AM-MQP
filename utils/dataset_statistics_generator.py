@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from utils.normalize_classname import normalize_classname
 
 ROOT_IMG_DIR = '../Stitched/'
 DIRS = ["K0", "Q0"]
@@ -26,7 +27,8 @@ for d in DIRS:
         annotation_json = json.load(f_ann)
 
     for a in annotation_json["shapes"]:
-        if a['label'] == 'lack of fusion porosity' or a['label'] == 'keyhole porosity':
+        label = normalize_classname(a['label'])
+        if label == 'lack of fusion porosity' or a['label'] == 'keyhole porosity':
             if a['shape_type'] == 'rectangle':
                 # extract row and col data and crop image to annotation size
                 col_min, col_max = int(min(a['points'][0][0], a['points'][1][0])), int(
@@ -72,7 +74,7 @@ for d in DIRS:
                 contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
                 total_area = sum([cv2.contourArea(c) for c in contours])
-            class_type = a["label"]
+            class_type = label
             data[d][class_type].append(total_area)
 new_df = pd.DataFrame.from_dict(data)
 new_df.to_csv("area_dist.csv")
