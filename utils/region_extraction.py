@@ -75,7 +75,7 @@ for set in sets_name:
                 instance = Polygon(l["points"])
             else:
                 instance = box(l["points"][0][0], l["points"][0][1], l["points"][1][0], l["points"][1][1])
-            if instance.intersects(region):
+            if instance.intersects(region) and (instance.intersection(region).area > 0.9*instance.area):
                 new_ins = [[p[0]-col_min, p[1]-row_min] for p in l["points"]]
                 new_label = {}
                 new_label["points"] = new_ins

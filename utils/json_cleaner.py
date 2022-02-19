@@ -7,6 +7,11 @@ import os
 import json
 from utils.normalize_classname import normalize_classname
 from utils.load_dataset_paths import load_dataset_paths
+import cv2
+import numpy as np
+
+def normalize_dimensions(col_min, col_max, row_min, row_max):
+    return max(col_min, 0), col_max, max(row_min, 0), row_max
 
 ROOT_IMG_DIR = '../Data/Images/' # root directory where all JSONs are contained
 ROOT_ANN_DIR = '../Data/Labels/'
@@ -21,11 +26,60 @@ for i in range(len(ann_dirs)):
     with open(ann_path, 'r') as f_ann:  # read JSON
         annotation_json = json.load(f_ann)
 
+    image = cv2.imread(img_path)
+
     shapes = []
     for shape in annotation_json['shapes']:
         shape['label'] = normalize_classname(shape['label'])
         if shape['label'] != 'gas entrapment porosity' and shape['label'] != 'other':
-            shapes.append(shape)
+            if shape['shape_type'] == 'rectangle':
+                # extract row and col data and crop image to annotation size
+                col_min, col_max = int(min(shape['points'][0][0], shape['points'][1][0])), int(
+                    max(shape['points'][0][0], shape['points'][1][0]))
+                row_min, row_max = int(min(shape['points'][0][1], shape['points'][1][1])), int(
+                    max(shape['points'][0][1], shape['points'][1][1]))
+                col_min, col_max, row_min, row_max = normalize_dimensions(col_min, col_max, row_min, row_max)
+                cropped_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
+                cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+                edged = cv2.Canny(cropped_img_gray, 30, 200)
+
+                # apply contour to image and fill
+                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+                dilated = cv2.dilate(edged, kernel)
+                contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+                total_area = sum([cv2.contourArea(c) for c in contours])
+
+            elif shape['shape_type'] == 'polygon':
+                # generate mask from polygon points
+                points = []
+                [points.append(coord) for coord in shape['points']]
+                points = np.array(points, dtype=np.int32)
+                polygon_mask = np.zeros(image.shape, dtype=np.uint8)
+                cv2.fillPoly(polygon_mask, [points], (255, 255, 255))
+
+                # apply mask
+                cropped_img = cv2.bitwise_and(image, polygon_mask)
+                black_pixels = np.where(
+                    (cropped_img[:, :, 0] == 0) &
+                    (cropped_img[:, :, 1] == 0) &
+                    (cropped_img[:, :, 2] == 0)
+                )
+
+                cropped_img[black_pixels] = (0, 255, 255)
+
+                cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+                edged = cv2.Canny(cropped_img_gray, 30, 200)
+
+                # apply contour to image and fill
+                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+                dilated = cv2.dilate(edged, kernel)
+                contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+                total_area = sum([cv2.contourArea(c) for c in contours])
+
+            if total_area > 800:
+                shapes.append(shape)
 
     os.remove(ann_path)  # delete old ann path
 
