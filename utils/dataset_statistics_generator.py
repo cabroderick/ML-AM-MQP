@@ -1,4 +1,6 @@
 import json
+import os
+
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,12 +16,14 @@ data = {}
 def normalize_dimensions(col_min, col_max, row_min, row_max):
     return max(col_min, 0), col_max, max(row_min, 0), row_max
 
-
 for d in DIRS:
     data[d] = {'lack of fusion porosity': [], 'keyhole porosity': []}
 
     ann_path = ROOT_IMG_DIR + d + "_merged.json"
     image_path = ROOT_IMG_DIR + d + ".png"
+
+    if not os.path.exists(image_path):
+        image_path = ROOT_IMG_DIR + d + ".tif"
 
     image = cv2.imread(image_path)
 
