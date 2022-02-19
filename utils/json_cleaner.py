@@ -37,4 +37,5 @@ for i in range(len(ann_dirs)):
         with open(ann_path, 'w') as f_ann:  # write back to the JSON
             json.dump(annotation_json, f_ann, indent=2)
     else:
+        print('No annotations found - removing image and json')
         os.remove(img_path) # remove image associated with json if it has no valid labels
