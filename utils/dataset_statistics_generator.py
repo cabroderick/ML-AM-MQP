@@ -92,16 +92,16 @@ plt.title("Distibution of pore areas for lack of fusion porosity")
 _ = plt.hist(all_areas_LOF)
 plt.xlabel("Size")
 plt.ylabel("Frequency")
-plt.savefing("lof_freq.png")
+plt.savefig("lof_freq.png")
 
 plt.title("Distibution of pore areas for keyhole porosity")
 _ = plt.hist(all_areas_keyhole)
-plt.savefing("keyhole_freq.png")
+plt.savefig("keyhole_freq.png")
 
-sorted_lof = all_areas_LOF.sort()
+sorted_lof = sorted(all_areas_LOF)
 bin_size = int(len(all_areas_LOF)/3)
-print(f'Bin 1: 0, {bin_size}')
-print(f'Bin 2: {bin_size}, {bin_size*2}')
-print(f'Bin 3: {bin_size*2+1}, {sorted_lof[-1]}')
+print(f'Bin 1: 0, {sorted_lof[bin_size]}')
+print(f'Bin 2: {sorted_lof[bin_size]}, {sorted_lof[bin_size*2]}')
+print(f'Bin 3: {sorted_lof[bin_size*2+1]}, {sorted_lof[-1]}')
 
 
