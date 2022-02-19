@@ -5,10 +5,45 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from utils.normalize_classname import normalize_classname
+from normalize_classname import normalize_classname
 
-ROOT_IMG_DIR = '../Stitched/'
-DIRS = ["K0", "Q0"]
+ROOT_IMG_DIR = '/home/cabroderick/Stitched/'
+DIRS = ['G0',
+'G7',
+'G8',
+'G9',
+'H0',
+'H4',
+'H5',
+'H6',
+'H7',
+'H8',
+'H9',
+'J0',
+'J1',
+'J3',
+'J4',
+'J4R',
+'J5',
+'J7',
+'J8',
+'J9',
+'K0',
+'K0R',
+'K1',
+'K4',
+'K5',
+'Q0',
+'Q3',
+'Q4',
+'Q5',
+'Q6',
+'Q9',
+'R0',
+'R2',
+'R5',
+'R6',
+'R7']
 
 data = {}
 
@@ -17,6 +52,8 @@ def normalize_dimensions(col_min, col_max, row_min, row_max):
     return max(col_min, 0), col_max, max(row_min, 0), row_max
 
 for d in DIRS:
+    print(d)
+
     data[d] = {'lack of fusion porosity': [], 'keyhole porosity': []}
 
     ann_path = ROOT_IMG_DIR + d + "_merged.json"

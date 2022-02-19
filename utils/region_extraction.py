@@ -5,14 +5,21 @@ import cv2
 import numpy as np
 
 SCALE_RATIO = 2
-ROOT_IMG_DIR = "../Stitched/"
-IMG_OUT_DIR = '../Regions/Images/'
-LABELS_OUT_DIR = '../Regions/Labels/'
-sets_name = ["Q0_50/"]
+ROOT_IMG_DIR = "/home/cabroderick/Regions/"
+IMG_OUT_DIR = '/home/cabroderick/Regions/Images/'
+LABELS_OUT_DIR = '/home/cabroderick/Regions/Labels/'
+sets_name = ['G0/', 'G8/', 'G9/', 'H0/', 'H4/', 'H5/', 'H6/', 'H7/', 'J3/', 'J4/', 'K0R/', 'K5/',
+            'Q0/', 'Q6/', 'R0/', 'R2/', 'R6/']
+
+def normalize_dimensions(col_min, col_max, row_min, row_max):
+    return max(col_min, 0), col_max, max(row_min, 0), row_max
 
 for set in sets_name:
+    print(set)
     annotation_json = json.load(open(ROOT_IMG_DIR+set[:-1]+"_merged_regions.json"))
     img = cv2.imread(ROOT_IMG_DIR+set[:-1] + ".png")
+    if img is None:
+        img = cv2.imread(ROOT_IMG_DIR+set[:-1] + '.tif')
     shapes = []
     regions = []
     instances = []
@@ -25,11 +32,13 @@ for set in sets_name:
     for i in range(len(regions)):
         new_annot = {"shapes": []}
         r = regions[i]
+        region = box(0,0,0,0) # to be overwritten
         if r['shape_type'] == 'rectangle':
             col_min, col_max = int(min(r['points'][0][0], r['points'][1][0])), int(
                 max(r['points'][0][0], r['points'][1][0]))
             row_min, row_max = int(min(r['points'][0][1], r['points'][1][1])), int(
                 max(r['points'][0][1], r['points'][1][1]))
+            col_min, col_max, row_min, row_max = normalize_dimensions(col_min, col_max, row_min, row_max)
             cropped_img = img[row_min:row_max, col_min:col_max]
             region = box(r["points"][0][0], r["points"][0][1], r["points"][1][0], r["points"][1][1])
         elif r['shape_type'] == 'polygon':
@@ -39,6 +48,8 @@ for set in sets_name:
             col_min, col_max = int(min(x_coords)), int(max(x_coords))
             y_coords = [point[1] for point in points]
             row_min, row_max = int(min(y_coords)), int(max(y_coords))
+
+            col_min, col_max, row_min, row_max = normalize_dimensions(col_min, col_max, row_min, row_max)
 
             cropped_img = img[row_min:row_max, col_min:col_max]
             points = [(point[0] - col_min, point[1] - row_min) for point in points] # adjust coords of points
@@ -55,6 +66,8 @@ for set in sets_name:
                 (cropped_img[:, :, 2] == 0)
             )
             cropped_img[black_pixels] = (0, 0, 0)
+
+            region = box(col_min, row_min, col_max, row_max)
 
         shapes = []
         for l in instances:
@@ -73,3 +86,4 @@ for set in sets_name:
 
         with open(LABELS_OUT_DIR+set+set[:-1]+'_'+ str(i)+".json", 'w') as outfile:
             json.dump(new_annot, outfile)
+
