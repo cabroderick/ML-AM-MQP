@@ -11,7 +11,7 @@ class Model_Dataset(utils.Dataset):
     IMG_DIRS = []  # list of image dirs to train on
     TRAIN_TEST_SPLIT = .8  # proportion of images to use for training set, remainder will be reserved for validation
     TEST_SET = [] # images reserved for test set
-    CLASSES = ['lack of fusion porosity', 'keyhole porosity']  # all annotation classes
+    CLASSES = ['small lack of fusion porosity', 'medium lack of fusion porosity', 'large lack of fusion porosity', 'keyhole porosity']  # all annotation classes
     VAL_SHIFT = 17  # number by which the validation test is shifted
 
     '''
