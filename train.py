@@ -22,8 +22,8 @@ class TrainConfig(Config):
     STEPS_PER_EPOCH = 100
     VALIDATION_STEPS = 5
     LEARNING_RATE = .0001
-    IMAGE_MIN_DIM = 615
-    IMAGE_MAX_DIM = 8783
+    IMAGE_MIN_DIM = 512
+    IMAGE_MAX_DIM = 4096
 
 config = TrainConfig()
 config.display()
@@ -57,7 +57,7 @@ if len(sys.argv) > 5:
         elif arg == 'IMAGE_MIN_DIM':
             TrainConfig.IMAGE_MIN_DIM = val
         elif arg == 'IMAGE_MAX_DIM':
-            TrainConfig.IMAGE_MAX_DIM = val
+            TrainConfig.IMAGE_MAX_DIM = int(val)
         elif arg == 'IMAGES_PER_GPU':
             TrainConfig.IMAGES_PER_GPU = val
         elif arg == 'BACKBONE':

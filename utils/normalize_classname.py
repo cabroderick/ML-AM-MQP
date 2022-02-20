@@ -11,6 +11,9 @@ def normalize_classname(class_name):  # normalize the class name to one used by 
         'keyhole': 'keyhole porosity',
         'other': 'other',
         'lack of fusion': 'lack of fusion porosity',
-        'lack-of_fusion': 'lack of fusion porosity'
+        'lack-of_fusion': 'lack of fusion porosity',
+        'small lack of fusion porosity': 'lack of fusion porosity',
+        'medium lack of fusion porosity': 'lack of fusion porosity',
+        'large lack of fusion porosity': 'lack of fusion porosity'
     }
     return classes_dict.get(class_name)

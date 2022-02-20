@@ -13,7 +13,11 @@ def load_dataset_paths(root_img_dir, root_annotation_dir, dirs):
                 image_paths.append(i_dir + i_id + '.tif')
             else:
                 image_paths.append(i_dir + i_id + '.png')
-            annotation_paths.append(a_dir + i_id + '.json')
+            if os.path.exists(a_dir + i_id + '.json'):
+                annotation_paths.append(a_dir + i_id + '.json')
+            else:
+                annotation_paths.append(a_dir + i_id + '_20X_YZ.json')
+            
 
     if len(image_paths) == len(annotation_paths):
         return image_paths, annotation_paths

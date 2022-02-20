@@ -156,15 +156,27 @@ class Model_Dataset(utils.Dataset):
         width = image.shape[1]
 
         annotation_list = []
-        [annotation_list.append(shape) for shape in annotation_json['shapes']
-         if shape['shape_type'] != 'circle']  # get annotations in a list
+        [annotation_list.append(shape) for shape in annotation_json['shapes']]  # get annotations in a list
         mask = np.zeros([height, width, len(annotation_list)],
                         dtype='uint8')  # initialize array of masks for each bounding box
 
         for i in range(len(annotation_list)):
             a = annotation_list[i]
 
-            if a['shape_type'] == 'rectangle':
+            shape_type = ''
+            if 'shape_type' in a:
+                shape_type = a['shape_type']
+            else:
+                points = []
+                for p in a['points']:
+                    points.append(p[0])
+                    points.append(p[1])
+                if len(points) == 4:
+                    shape_type = 'rectangle'
+                else:
+                    shape_type = 'polygon'
+
+            if shape_type == 'rectangle':
                 # extract row and col data and crop image to annotation size
                 col_min, col_max = int(min(a['points'][0][0], a['points'][1][0])), int(
                     max(a['points'][0][0], a['points'][1][0]))
@@ -187,7 +199,7 @@ class Model_Dataset(utils.Dataset):
                 polygon_bool = np.alltrue(polygon == color, axis=2)
                 mask[row_min:row_max, col_min:col_max, i] = polygon_bool
 
-            elif a['shape_type'] == 'polygon':
+            elif shape_type == 'polygon':
                 # generate mask from polygon points
                 points = []
                 [points.append(coord) for coord in a['points']]
