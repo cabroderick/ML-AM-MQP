@@ -78,13 +78,15 @@ for i in range(len(ann_dirs)):
 
                 total_area = sum([cv2.contourArea(c) for c in contours])
 
-            if total_area > 800:
+            if total_area > 800 and shape['label'] == "lack of fusion porosity":
                 if total_area < THRESHOLD_1:
                     shape["label"] = "small lack of fusion porosity"
                 elif total_area < THRESHOLD_2:
                     shape["label"] = "medium lack of fusion porosity"
                 else:
                     shape["label"] = "large lack of fusion porosity"
+                shapes.append(shape)
+            elif shape['label'] == "keyhole porosity":
                 shapes.append(shape)
 
     os.remove(ann_path)  # delete old ann path
