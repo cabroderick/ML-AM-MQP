@@ -8,8 +8,7 @@ SCALE_RATIO = 2
 ROOT_IMG_DIR = "/home/cabroderick/Regions/"
 IMG_OUT_DIR = '/home/cabroderick/Regions/Images/'
 LABELS_OUT_DIR = '/home/cabroderick/Regions/Labels/'
-sets_name = ['G0/', 'G8/', 'G9/', 'H0/', 'H4/', 'H5/', 'H6/', 'H7/', 'J3/', 'J4/', 'K0R/', 'K5/',
-            'Q0/', 'Q6/', 'R0/', 'R2/', 'R6/']
+sets_name = ['H5/']
 
 def normalize_dimensions(col_min, col_max, row_min, row_max):
     return max(col_min, 0), col_max, max(row_min, 0), row_max

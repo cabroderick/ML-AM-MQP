@@ -1,9 +1,9 @@
 import os
 import random
 
-OUT_DIR = '../test_set.txt'
-ROOT_IMG_DIR = '../Data/Images/'
-IMG_DIRS = ['H6', 'J8']
+OUT_DIR = '/home/cabroderick/test_set.txt'
+ROOT_IMG_DIR = '/home/cabroderick/Data/Images/'
+IMG_DIRS = ['G7', 'H8', 'H9', 'J4R', 'J5', 'J7', 'J9', 'K1', 'Q9', 'R5']
 
 img_ids = [] # all image ids on a row basis for each set
 current_row = 1
@@ -29,6 +29,6 @@ for set in img_ids:
        if subset:
            lines.append(random.choice(subset) + '\n')
 
-f = open(OUT_DIR, 'w')
+f = open(OUT_DIR, 'a')
 f.writelines(lines)
 f.close()
