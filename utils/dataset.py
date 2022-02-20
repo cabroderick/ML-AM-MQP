@@ -35,7 +35,10 @@ class Model_Dataset(utils.Dataset):
                     print('Test set image read - skipping')
                     continue
                 image_ids[i].append(i_id)
-                image_paths[i].append(i_dir + i_id + '.tif')
+                if os.path.exists(i_dir + i_id + '.tif'): 
+                    image_paths[i].append(i_dir + i_id + '.tif')
+                else:
+                    image_paths[i].append(i_dir + i_id + '.png')
                 annotation_paths[i].append(a_dir + i_id + '.json')
 
         # configure dataset
