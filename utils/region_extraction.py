@@ -1,14 +1,16 @@
 import json
 from shapely.geometry.polygon import Polygon
+from shapely.validation import make_valid
 from shapely.geometry import box
 import cv2
 import numpy as np
 
 SCALE_RATIO = 2
-ROOT_IMG_DIR = "/home/cabroderick/Regions/"
-IMG_OUT_DIR = '/home/cabroderick/Regions/Images/'
-LABELS_OUT_DIR = '/home/cabroderick/Regions/Labels/'
-sets_name = ['H5/']
+ROOT_IMG_DIR = "/work/azstaszewska/Data/Stitched Final/Images/"
+IMG_OUT_DIR = '/work/azstaszewska/Data/Final Images/'
+LABELS_OUT_DIR = '/work/azstaszewska/Data/Final Labels/'
+sets_name = [ 'G8/','G9/','H5/', 'H4/', 'H6/','H7/', 'J3/','J4/','K0R/','K5/','Q0/','Q6/','R0/','R2/','R6/']#['G0/', 'H0/']
+
 
 def normalize_dimensions(col_min, col_max, row_min, row_max):
     return max(col_min, 0), col_max, max(row_min, 0), row_max
@@ -74,7 +76,8 @@ for set in sets_name:
                 instance = Polygon(l["points"])
             else:
                 instance = box(l["points"][0][0], l["points"][0][1], l["points"][1][0], l["points"][1][1])
-            if instance.intersects(region) and (instance.intersection(region).area > 0.9*instance.area):
+            if instance.intersects(region) and (make_valid(instance).intersection(make_valid(region)).area >
+                                                0.9*make_valid(instance).area):
                 new_ins = [[p[0]-col_min, p[1]-row_min] for p in l["points"]]
                 new_label = {}
                 new_label["points"] = new_ins
