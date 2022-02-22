@@ -32,7 +32,7 @@ class Model_Dataset(utils.Dataset):
             for file in os.listdir(i_dir):
                 i_id = file[:-4]
                 if i_id in self.TEST_SET:
-                    print('Test set image read - skipping')
+                    # print('Test set image read - skipping')
                     continue
                 image_ids[i].append(i_id)
                 if os.path.exists(i_dir + i_id + '.tif'): 
@@ -142,7 +142,7 @@ class Model_Dataset(utils.Dataset):
   Returns a mask and a list of class ids
   '''
     def extract_mask(self, image_path, annotation_path):
-        print(image_path, annotation_path)
+        # print(image_path, annotation_path)
 
         f_ann = open(annotation_path, )
         annotation_json = json.load(f_ann)

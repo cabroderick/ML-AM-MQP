@@ -15,15 +15,14 @@ if len(sys.argv) < 5:
 # Configuration
 ######################################
 class TrainConfig(Config):
-    NAME = "mrcnn-model"
-    GPU_COUNT = 1
+    NAME = "mrcnn_model"
+    GPU_COUNT = 2
     IMAGES_PER_GPU = 2
     NUM_CLASSES = 4 + 1 # 4 classes + background
-    STEPS_PER_EPOCH = 100
+    STEPS_PER_EPOCH = 100 # 798 dataset size / batch size of 2 (2 image/GPU * 1 GPU)
     VALIDATION_STEPS = 5
-    LEARNING_RATE = .0001
-    IMAGE_MIN_DIM = 512
-    IMAGE_MAX_DIM = 4096
+    LEARNING_RATE = .0001 # optimized from hyperparameter tuning
+    BACKBONE = "resnet50"
 
 config = TrainConfig()
 config.display()
@@ -32,7 +31,7 @@ config.display()
 paths_file = open(sys.argv[3], 'r')
 img_dirs = paths_file.readlines()
 img_dirs = [line.rstrip('\n') for line in img_dirs]
-print(img_dirs)
+print('Training on sets: ' + str(img_dirs))
 
 # load list of test images
 paths_file_test = open(sys.argv[4], 'r')
@@ -48,26 +47,13 @@ if len(sys.argv) > 5:
         arg, val = arg.replace(' ', '').split('=')
         if arg == 'LEARNING_RATE':
             TrainConfig.LEARNING_RATE = float(val)
-            print('Learning rate set to ' + str(val))
         elif arg == 'STEPS_PER_EPOCH':
             TrainConfig.STEPS_PER_EPOCH = int(val)
-            print('Steps per epoch set to ' + str(val))
         elif arg == 'VALIDATION_STEPS':
-            TrainConfig.VALIDATION_STEPS = val
-        elif arg == 'IMAGE_MIN_DIM':
-            TrainConfig.IMAGE_MIN_DIM = val
-        elif arg == 'IMAGE_MAX_DIM':
-            TrainConfig.IMAGE_MAX_DIM = int(val)
-        elif arg == 'IMAGES_PER_GPU':
-            TrainConfig.IMAGES_PER_GPU = val
-        elif arg == 'BACKBONE':
-            TrainConfig.BACKBONE = val
-        elif arg == 'MAX_GT_INSTANCES':
-            TrainConfig.MAX_GT_INSTANCES = val
+            TrainConfig.VALIDATION_STEPS = int(val)
         elif arg == 'LEARNING_MOMENTUM':
-            TrainConfig.LEARNING_MOMENTUM = val
-        elif arg == 'OPTIMIZER':
-            TrainConfig.OPTIMIZER = val
+            TrainConfig.LEARNING_MOMENTUM = float(val)
+        print(arg + ' set to ' + val)
 
 #######################################
 # Training
