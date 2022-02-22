@@ -20,16 +20,19 @@ if len(sys.argv) > 2:
     img_dirs = paths_file.readlines()
     sets_list = img_dirs
 
+
 for set in sets_list:
     for filename in os.listdir(dataset.ROOT_IMG_DIR + set):
         image = imageio.imread(dataset.ROOT_IMG_DIR + set+"\\"+filename)
 
         if aug_method == "gaussian_blur":
-            aug = imgaug.augmenters.GaussianBlur(sigma=(0.0, 3.0))
+            aug = imgaug.augmenters.GaussianBlur(sigma=(0.1, 1.5))
         elif aug_method == "fliplr":
             aug = imgaug.augmenters.Fliplr(1)
         elif aug_method == "flipud":
             aug = imgaug.augmenters.Flipud(1)
+        elif aug_method == "salt_pepper":
+            aug = imgaug.augmenters.SaltAndPepper(0.01)
 
         img_aug = aug(image=image)
         annotations = {}
