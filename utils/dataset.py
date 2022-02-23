@@ -6,8 +6,8 @@ from mrcnn import utils
 
 class Model_Dataset(utils.Dataset):
     # model constants, override as needed
-    ROOT_IMG_DIR = os.path.expanduser('~') + '/Data/Images/'  # directory where all images can be found
-    ROOT_ANNOTATION_DIR = os.path.expanduser('~') + '/Data/Labels/'  # directory where all images labels can be found
+    ROOT_IMG_DIR = 'C:/git/ML-AM-MQP/Data_downsized/Images/'  # directory where all images can be found
+    ROOT_ANNOTATION_DIR = 'C:/git/ML-AM-MQP/Data_downsized/Labels/'  # directory where all images labels can be found
     IMG_DIRS = []  # list of image dirs to train on
     TRAIN_TEST_SPLIT = .8  # proportion of images to use for training set, remainder will be reserved for validation
     TEST_SET = [] # images reserved for test set
@@ -183,15 +183,15 @@ class Model_Dataset(utils.Dataset):
                 row_min, row_max = int(min(a['points'][0][1], a['points'][1][1])), int(
                     max(a['points'][0][1], a['points'][1][1]))
                 col_min, col_max, row_min, row_max = self.normalize_dimensions(col_min, col_max, row_min, row_max)
-                cropped_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
-                cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+                masked_img = image[row_min:row_max, col_min:col_max]  # crop image to size of bounding box
+                cropped_img_gray = cv2.cvtColor(masked_img, cv2.COLOR_BGR2GRAY)
                 edged = cv2.Canny(cropped_img_gray, 30, 200)
 
                 # apply contour to image and fill
                 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
                 dilated = cv2.dilate(edged, kernel)
                 contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                polygon = np.zeros(cropped_img.shape)
+                polygon = np.zeros(masked_img.shape)
                 color = [255, 255, 255]
                 cv2.fillPoly(polygon, contours, color)
 
@@ -208,16 +208,30 @@ class Model_Dataset(utils.Dataset):
                 cv2.fillPoly(polygon_mask, [points], (255, 255, 255))
 
                 # apply mask
-                cropped_img = cv2.bitwise_and(image, polygon_mask)
+                masked_img = cv2.bitwise_and(image, polygon_mask)
                 black_pixels = np.where(
-                    (cropped_img[:, :, 0] == 0) &
-                    (cropped_img[:, :, 1] == 0) &
-                    (cropped_img[:, :, 2] == 0)
+                    (masked_img[:, :, 0] == 0) &
+                    (masked_img[:, :, 1] == 0) &
+                    (masked_img[:, :, 2] == 0)
                 )
 
-                cropped_img[black_pixels] = (0, 255, 255)
+                threshold = (0, 150, 200)
 
-                cropped_img_gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+                g = image[:, :, 1]
+                r = image[:, :, 2]
+
+                r = r.flatten()
+                r = [val for val in r if val > threshold[2]]
+                avg_r = np.average(r)
+                avg_b = 0
+                g = g.flatten()
+                g = [val for val in g if val > threshold[1]]
+                avg_g = np.average(g)
+
+                avg_color = (avg_b, avg_g, avg_r)
+                masked_img[black_pixels] = avg_color
+
+                cropped_img_gray = cv2.cvtColor(masked_img, cv2.COLOR_BGR2GRAY)
                 edged = cv2.Canny(cropped_img_gray, 30, 200)
 
                 # apply contour to image and fill
@@ -225,13 +239,19 @@ class Model_Dataset(utils.Dataset):
                 dilated = cv2.dilate(edged, kernel)
                 contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-                polygon = np.zeros(cropped_img.shape)
+                polygon = np.zeros(masked_img.shape)
                 color = [255, 255, 255]
                 cv2.fillPoly(polygon, contours, color)
 
                 # normalize polygon to all boolean values and insert into mask
                 polygon_bool = np.alltrue(polygon == color, axis=2)
                 mask[:, :, i] = polygon_bool
+
+                # # show defect and generated mask
+                # cv2.imshow('Image', cv2.resize(masked_img, (512, 512)))
+                # cv2.waitKey(0)
+                # cv2.imshow('Mask', cv2.resize(polygon, (512, 512)))
+                # cv2.waitKey(0)
 
             # extract class id and append to list
             class_label = a['label']
